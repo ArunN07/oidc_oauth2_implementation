@@ -1,13 +1,12 @@
 import logging
 import sys
 from logging.config import dictConfig
-from typing import Optional
 
 
 def get_logging_config(
     log_level: int = logging.INFO,
     log_file: str = "logs/app.log",
-    handlers_to_use: Optional[list] = None,
+    handlers_to_use: list | None = None,
 ) -> dict:
     """
     Returns a logging configuration dictionary for use with dictConfig.
@@ -67,7 +66,7 @@ def get_logging_config(
 def setup_logging(
     log_level: int = logging.INFO,
     log_file: str = "logs/app.log",
-    handlers_to_use: Optional[list] = None,
+    handlers_to_use: list | None = None,
 ) -> None:
     """
     Configure logging using dictConfig.
@@ -100,7 +99,7 @@ class CustomLogger:
         logger_name: str = "app_logger",
         log_level: int = logging.INFO,
         log_file: str = "logs/app.log",
-        handlers_to_use: Optional[list] = None,
+        handlers_to_use: list | None = None,
     ):
         """
         Initialize the custom logger.

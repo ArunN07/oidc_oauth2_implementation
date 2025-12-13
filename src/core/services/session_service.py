@@ -1,6 +1,6 @@
 import hashlib
 from datetime import UTC, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -49,9 +49,9 @@ class SessionService:
     @staticmethod
     def create_session(
         db: Session,
-        user_data: Dict[str, Any],
-        token_data: Dict[str, Any],
-        request_info: Optional[Dict[str, str]] = None,
+        user_data: dict[str, Any],
+        token_data: dict[str, Any],
+        request_info: dict[str, str] | None = None,
     ) -> UserSession:
         """
         Create a new user session.
@@ -101,7 +101,7 @@ class SessionService:
         return session
 
     @staticmethod
-    def end_session(db: Session, session_id: int) -> Optional[UserSession]:
+    def end_session(db: Session, session_id: int) -> UserSession | None:
         """
         End an active session.
 
@@ -126,7 +126,7 @@ class SessionService:
         return session
 
     @staticmethod
-    def end_sessions_by_token(db: Session, access_token: str) -> List[UserSession]:
+    def end_sessions_by_token(db: Session, access_token: str) -> list[UserSession]:
         """
         End all sessions with a specific access token.
 
@@ -158,8 +158,8 @@ class SessionService:
 
     @staticmethod
     def get_active_sessions(
-        db: Session, user_id: Optional[str] = None, provider: Optional[str] = None
-    ) -> List[UserSession]:
+        db: Session, user_id: str | None = None, provider: str | None = None
+    ) -> list[UserSession]:
         """
         Get active sessions, optionally filtered by user and/or provider.
 
@@ -190,11 +190,11 @@ class SessionService:
     def log_authentication(
         db: Session,
         provider: str,
-        user_id: Optional[str],
-        username: Optional[str],
+        user_id: str | None,
+        username: str | None,
         success: bool,
-        error_msg: Optional[str] = None,
-        request_info: Optional[Dict[str, str]] = None,
+        error_msg: str | None = None,
+        request_info: dict[str, str] | None = None,
     ) -> AuthenticationLog:
         """
         Log an authentication attempt.
@@ -241,8 +241,8 @@ class SessionService:
 
     @staticmethod
     def get_authentication_logs(
-        db: Session, provider: Optional[str] = None, user_id: Optional[str] = None, limit: int = 100
-    ) -> List[AuthenticationLog]:
+        db: Session, provider: str | None = None, user_id: str | None = None, limit: int = 100
+    ) -> list[AuthenticationLog]:
         """
         Get authentication logs with optional filters.
 

@@ -1,11 +1,14 @@
 import logging
 from enum import Enum
 from functools import lru_cache
-from typing import Optional
+from pathlib import Path
 
 from environs import Env
 from pydantic import Field
 from pydantic_settings import BaseSettings
+
+# Project root directory (4 levels up from this file)
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 
 # Load environment early for configuration
 _env = Env()
@@ -91,7 +94,10 @@ class Settings(BaseSettings):
 
     # Logging Settings
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
-    log_file: str = Field(default="logs/app.log", alias="LOG_FILE")
+    log_file: str = Field(
+        default=str(PROJECT_ROOT / "logs" / "app.log"),
+        alias="LOG_FILE"
+    )
 
     # Auth Provider Switch
     auth_provider: AuthProvider = Field(default=AuthProvider.GITHUB, alias="AUTH_PROVIDER")
@@ -150,11 +156,11 @@ class Settings(BaseSettings):
     database_name: str = Field(default="oidc_demo", alias="DATABASE_NAME")
     database_user: str = Field(default="postgres", alias="DATABASE_USER")
     database_password: str = Field(default="postgres", alias="DATABASE_PASSWORD")
-    database_url: Optional[str] = Field(default=None, alias="DATABASE_URL")
+    database_url: str | None = Field(default=None, alias="DATABASE_URL")
 
     # Proxy Settings
-    http_proxy: Optional[str] = Field(default=None, alias="HTTP_PROXY")
-    https_proxy: Optional[str] = Field(default=None, alias="HTTPS_PROXY")
+    http_proxy: str | None = Field(default=None, alias="HTTP_PROXY")
+    https_proxy: str | None = Field(default=None, alias="HTTPS_PROXY")
     disable_proxy: bool = Field(default=True, alias="DISABLE_PROXY")
 
     # Security Settings

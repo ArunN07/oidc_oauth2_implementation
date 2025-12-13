@@ -1,16 +1,29 @@
 from functools import lru_cache
-from typing import Generator, Optional
+from typing import Generator
 
-from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.exc import SQLAlchemyError
+from sqlmodel import Session, SQLModel, create_engine
 
 from src.core.exceptions.exceptions import DatabaseConnectionError
+from src.core.models.database_models import AuthenticationLog, UserSession  # noqa: F401
 from src.core.settings.app import get_settings
 
 
+def _create_tables(engine: Engine) -> None:
+    """
+    Creates all tables defined in the database models if they don't exist.
+
+    Parameters
+    ----------
+    engine : Engine
+        SQLAlchemy engine instance.
+    """
+    SQLModel.metadata.create_all(engine)
+
+
 @lru_cache(maxsize=10)
-def get_engine(database_url: Optional[str] = None) -> Engine:
+def get_engine(database_url: str | None = None) -> Engine:
     """
     Create or retrieve a cached SQLAlchemy engine.
 
@@ -36,24 +49,29 @@ def get_engine(database_url: Optional[str] = None) -> Engine:
     )
 
 
-def get_session_factory(engine: Optional[Engine] = None) -> sessionmaker:
+@lru_cache(maxsize=10)
+def _ensure_tables_initialized(engine: Engine) -> bool:
     """
-    Create a session factory for the given engine.
+    Ensures database tables are initialized once per engine.
 
     Parameters
     ----------
-    engine : Engine, optional
-        SQLAlchemy engine. Creates default if not provided.
+    engine : Engine
+        SQLAlchemy engine instance.
 
     Returns
     -------
-    sessionmaker
-        Session factory.
+    bool
+        True if initialization succeeded.
     """
-    if engine is None:
-        engine = get_engine()
-
-    return sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    try:
+        _create_tables(engine)
+        return True
+    except SQLAlchemyError as e:
+        raise DatabaseConnectionError(
+            message="Failed to initialize database tables",
+            detail=str(e)
+        )
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -65,39 +83,10 @@ def get_db() -> Generator[Session, None, None]:
     Session
         Database session.
     """
-    SessionLocal = get_session_factory()
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    engine = get_engine()
+    _ensure_tables_initialized(engine)
+
+    with Session(engine) as session:
+        yield session
 
 
-def check_database_connection(engine: Optional[Engine] = None) -> bool:
-    """
-    Check if database connection is working.
-
-    Parameters
-    ----------
-    engine : Engine, optional
-        SQLAlchemy engine to test.
-
-    Returns
-    -------
-    bool
-        True if connection is successful.
-
-    Raises
-    ------
-    DatabaseConnectionError
-        If connection fails.
-    """
-    if engine is None:
-        engine = get_engine()
-
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        return True
-    except Exception as e:
-        raise DatabaseConnectionError(message="Failed to connect to database", detail=str(e))

@@ -1,15 +1,15 @@
 from collections.abc import Callable
 from logging import Logger
 
-from fastapi import Depends
-from fastapi.params import Depends as DependsType
-
 from delphi_studio_backend.core.cache.base_cache import BaseCache
 from delphi_studio_backend.core.cache.cache_types import CacheType
 from delphi_studio_backend.core.cache.in_memory_cache import InMemoryCache
 from delphi_studio_backend.core.cache.redis_cache import RedisCache
 from delphi_studio_backend.core.configuration.logger_dependency import get_logger
 from delphi_studio_backend.core.settings.app import app_settings
+
+from fastapi import Depends
+from fastapi.params import Depends as DependsType
 
 # Cache singleton registry
 _cached_instances: dict[CacheType | None, BaseCache] = {}

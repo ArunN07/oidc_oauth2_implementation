@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 
 class BaseAppException(Exception):
     """
@@ -16,7 +14,7 @@ class BaseAppException(Exception):
         Additional error details.
     """
 
-    def __init__(self, message: str, detail: Optional[str] = None):
+    def __init__(self, message: str, detail: str | None = None):
         """
         Initialize the exception.
 
@@ -40,7 +38,7 @@ class AuthError(BaseAppException):
     expired tokens, or authorization failures.
     """
 
-    def __init__(self, message: str = "Authentication failed", detail: Optional[str] = None):
+    def __init__(self, message: str = "Authentication failed", detail: str | None = None):
         """
         Initialize authentication error.
 
@@ -61,7 +59,7 @@ class ConfigError(BaseAppException):
     Raised when required configuration is missing or invalid.
     """
 
-    def __init__(self, message: str = "Configuration error", detail: Optional[str] = None):
+    def __init__(self, message: str = "Configuration error", detail: str | None = None):
         """
         Initialize configuration error.
 
@@ -86,11 +84,11 @@ class ProviderNotSupportedError(BaseAppException):
     ----------
     provider : str
         The requested provider name.
-    supported_providers : List[str]
+    supported_providers : list[str]
         List of supported provider names.
     """
 
-    def __init__(self, provider: str, supported_providers: Optional[List[str]] = None):
+    def __init__(self, provider: str, supported_providers: list[str] | None = None):
         """
         Initialize provider not supported error.
 
@@ -98,7 +96,7 @@ class ProviderNotSupportedError(BaseAppException):
         ----------
         provider : str
             The requested unsupported provider.
-        supported_providers : List[str], optional
+        supported_providers : list[str], optional
             List of supported providers.
         """
         supported = supported_providers or ["github", "azure", "google"]
@@ -111,35 +109,35 @@ class ProviderNotSupportedError(BaseAppException):
 class TokenValidationError(AuthError):
     """Exception for token validation failures."""
 
-    def __init__(self, message: str = "Token validation failed", detail: Optional[str] = None):
+    def __init__(self, message: str = "Token validation failed", detail: str | None = None):
         super().__init__(message=message, detail=detail)
 
 
 class TokenExpiredError(AuthError):
     """Exception when token has expired."""
 
-    def __init__(self, message: str = "Token has expired", detail: Optional[str] = None):
+    def __init__(self, message: str = "Token has expired", detail: str | None = None):
         super().__init__(message=message, detail=detail)
 
 
 class InvalidCredentialsError(AuthError):
     """Exception for invalid credentials."""
 
-    def __init__(self, message: str = "Invalid credentials", detail: Optional[str] = None):
+    def __init__(self, message: str = "Invalid credentials", detail: str | None = None):
         super().__init__(message=message, detail=detail)
 
 
 class OAuth2CallbackError(AuthError):
     """Exception for OAuth2 callback errors."""
 
-    def __init__(self, message: str = "OAuth2 callback failed", detail: Optional[str] = None):
+    def __init__(self, message: str = "OAuth2 callback failed", detail: str | None = None):
         super().__init__(message=message, detail=detail)
 
 
 class UserNotFoundError(AuthError):
     """Exception when user information cannot be retrieved."""
 
-    def __init__(self, message: str = "User not found", detail: Optional[str] = None):
+    def __init__(self, message: str = "User not found", detail: str | None = None):
         super().__init__(message=message, detail=detail)
 
 
@@ -155,12 +153,12 @@ class MissingConfigurationError(ConfigError):
 class DatabaseException(BaseAppException):
     """Base exception for database errors."""
 
-    def __init__(self, message: str = "Database error", detail: Optional[str] = None):
+    def __init__(self, message: str = "Database error", detail: str | None = None):
         super().__init__(message=message, detail=detail)
 
 
 class DatabaseConnectionError(DatabaseException):
     """Exception for database connection failures."""
 
-    def __init__(self, message: str = "Failed to connect to database", detail: Optional[str] = None):
+    def __init__(self, message: str = "Failed to connect to database", detail: str | None = None):
         super().__init__(message=message, detail=detail)

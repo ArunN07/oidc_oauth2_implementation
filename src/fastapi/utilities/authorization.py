@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Literal
 
 from fastapi import Depends, Header, HTTPException, Query, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -7,7 +7,14 @@ from src.core.auth.base import BaseAuthProvider
 from src.core.auth.factory import get_auth_provider
 from src.core.configuration.logger_dependency import get_logger
 from src.core.exceptions.exceptions import ProviderNotSupportedError
-from src.core.settings.app import get_settings
+from src.core.settings.app import AuthProvider, get_settings
+
+# Create Literal type from AuthProvider enum values for dropdown in API docs
+# Note: These values must match AuthProvider enum values
+ProviderLiteral = Literal["github", "azure", "google", "okta", "facebook"]
+
+# Validate that ProviderLiteral values match AuthProvider enum at runtime
+_VALID_PROVIDERS = {p.value for p in AuthProvider}
 
 # Security scheme for bearer token
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -15,9 +22,9 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Security(bearer_scheme),
-    provider: Optional[str] = Query(None, description="Auth provider override"),
+    provider: ProviderLiteral | None = Query(None, description="Auth provider override"),
     logger: Logger = Depends(get_logger),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Get current authenticated user from the access token.
 
@@ -82,7 +89,7 @@ async def get_current_user(
         )
 
 
-def authorize_user_access(required_roles: Optional[list[str]] = None) -> Callable:
+def authorize_user_access(required_roles: list[str] | None = None) -> Callable:
     """
     Factory function to create authorization dependency.
 
@@ -113,9 +120,9 @@ def authorize_user_access(required_roles: Optional[list[str]] = None) -> Callabl
     """
 
     async def dependency(
-        current_user: Dict[str, Any] = Security(get_current_user),
+        current_user: dict[str, Any] = Security(get_current_user),
         logger: Logger = Depends(get_logger),
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         user = current_user.get("user", {})
         provider = current_user.get("provider", "unknown")
 
@@ -139,7 +146,7 @@ def authorize_user_access(required_roles: Optional[list[str]] = None) -> Callabl
     return dependency
 
 
-def _extract_user_roles(user: Dict[str, Any], provider: str) -> list[str]:
+def _extract_user_roles(user: dict[str, Any], provider: str) -> list[str]:
     """
     Extract user roles based on provider and admin configuration.
 
@@ -181,7 +188,7 @@ def _extract_user_roles(user: Dict[str, Any], provider: str) -> list[str]:
 
 
 def get_provider_dependency(
-    provider: Optional[str] = Query(None, description="Override auth provider (github, azure, google)"),
+    provider: ProviderLiteral | None = Query(None, description="Override auth provider (github, azure, google)"),
     logger: Logger = Depends(get_logger),
 ) -> BaseAuthProvider:
     """
@@ -268,7 +275,7 @@ class AuthDependency:
     Allows creating auth dependencies with specific providers.
     """
 
-    def __init__(self, provider: Optional[str] = None):
+    def __init__(self, provider: str | None = None):
         """
         Initialize auth dependency.
 

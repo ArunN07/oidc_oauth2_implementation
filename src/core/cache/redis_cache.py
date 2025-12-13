@@ -1,7 +1,6 @@
 import redis
-from redis import ConnectionPool, Redis
-
 from delphi_studio_backend.core.cache.base_cache import BaseCache
+from redis import ConnectionPool, Redis
 
 
 class RedisCache(BaseCache):

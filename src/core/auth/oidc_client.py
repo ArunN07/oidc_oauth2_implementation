@@ -1,16 +1,15 @@
 import base64
 import hashlib
 import secrets
-from typing import Optional, Tuple
 from urllib.parse import urlencode
 
 import httpx
 
-from src.core.settings.app import get_settings
 from src.core.auth.pkce_store import get_pkce_store
+from src.core.settings.app import get_settings
 
 
-def _generate_pkce_pair() -> Tuple[str, str]:
+def _generate_pkce_pair() -> tuple[str, str]:
     """
     Generate PKCE code_verifier and code_challenge pair.
 
@@ -120,7 +119,7 @@ class GenericOIDCClient:
         self.use_pkce = use_pkce
         # PKCE verifiers are stored in global PKCEStore for persistence across requests
 
-    async def exchange_code_for_token(self, code: str, state: Optional[str] = None) -> dict:
+    async def exchange_code_for_token(self, code: str, state: str | None = None) -> dict:
         """
         Exchanges an authorization code for access and ID tokens.
 
@@ -191,8 +190,8 @@ class GenericOIDCClient:
         return response.json()
 
     def build_login_redirect_url(
-        self, state: Optional[str] = None, prompt: Optional[str] = None
-    ) -> Tuple[str, str]:
+        self, state: str | None = None, prompt: str | None = None
+    ) -> tuple[str, str]:
         """
         Constructs the login redirect URL for Authorization Code Flow with PKCE.
 

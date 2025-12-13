@@ -1,14 +1,12 @@
-from typing import Dict, Optional, Type
-
 from src.core.auth.base import BaseAuthProvider
 from src.core.exceptions.exceptions import ProviderNotSupportedError
 from src.core.settings.app import get_settings
 
 # Provider registry - populated by services when they import
-_provider_registry: Dict[str, Type[BaseAuthProvider]] = {}
+_provider_registry: dict[str, type[BaseAuthProvider]] = {}
 
 
-def register_provider(name: str, provider_class: Type[BaseAuthProvider]) -> None:
+def register_provider(name: str, provider_class: type[BaseAuthProvider]) -> None:
     """
     Register an authentication provider.
 
@@ -24,7 +22,7 @@ def register_provider(name: str, provider_class: Type[BaseAuthProvider]) -> None
     _provider_registry[name.lower()] = provider_class
 
 
-def get_auth_provider(provider: Optional[str] = None) -> BaseAuthProvider:
+def get_auth_provider(provider: str | None = None) -> BaseAuthProvider:
     """
     Get an authentication provider instance.
 

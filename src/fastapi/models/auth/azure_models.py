@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from pydantic import BaseModel, Field
 
 
@@ -10,47 +8,36 @@ class AzureTokenResponse(BaseModel):
     token_type: str = "Bearer"
     expires_in: int
     scope: str
-    refresh_token: Optional[str] = None
-    id_token: Optional[str] = None
+    refresh_token: str | None = None
+    id_token: str | None = None
 
 
 class AzureUser(BaseModel):
-    """Azure AD user information from ID token or Graph API."""
+    """Azure AD user information - essential fields only."""
 
     sub: str = Field(..., description="Subject identifier")
-    name: Optional[str] = None
-    preferred_username: Optional[str] = None
-    email: Optional[str] = None
-    oid: Optional[str] = Field(None, description="Object ID in Azure AD")
-    tid: Optional[str] = Field(None, description="Tenant ID")
-    given_name: Optional[str] = None
-    family_name: Optional[str] = None
-    roles: Optional[List[str]] = None
+    name: str | None = None
+    email: str | None = None
+    preferred_username: str | None = None
 
 
 class AzureIdTokenClaims(BaseModel):
-    """Claims from Azure AD ID token."""
+    """Essential claims from Azure AD ID token."""
 
     iss: str
     sub: str
     aud: str
     exp: int
-    iat: int
-    nbf: Optional[int] = None
-    name: Optional[str] = None
-    preferred_username: Optional[str] = None
-    email: Optional[str] = None
-    oid: Optional[str] = None
-    tid: Optional[str] = None
-    roles: Optional[List[str]] = None
-    groups: Optional[List[str]] = None
+    name: str | None = None
+    email: str | None = None
+    preferred_username: str | None = None
 
 
 class AzureLoginResponse(BaseModel):
     """Response for Azure login endpoint."""
 
     authorization_url: str
-    state: Optional[str] = None
+    state: str | None = None
 
 
 class AzureCallbackResponse(BaseModel):
@@ -59,7 +46,7 @@ class AzureCallbackResponse(BaseModel):
     access_token: str
     token_type: str
     expires_in: int
-    id_token: Optional[str] = None
+    id_token: str | None = None
     user: AzureUser
 
 
@@ -68,4 +55,4 @@ class AzureUserResponse(BaseModel):
 
     provider: str = "azure"
     user: AzureUser
-    claims: Optional[AzureIdTokenClaims] = None
+    claims: AzureIdTokenClaims | None = None

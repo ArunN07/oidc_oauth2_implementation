@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, Field
 
 
@@ -10,46 +8,38 @@ class GoogleTokenResponse(BaseModel):
     token_type: str = "Bearer"
     expires_in: int
     scope: str
-    refresh_token: Optional[str] = None
-    id_token: Optional[str] = None
+    refresh_token: str | None = None
+    id_token: str | None = None
 
 
 class GoogleUser(BaseModel):
-    """Google user information."""
+    """Google user information - essential fields only."""
 
     sub: str = Field(..., description="Subject identifier")
-    name: Optional[str] = None
-    given_name: Optional[str] = None
-    family_name: Optional[str] = None
-    email: Optional[str] = None
-    email_verified: Optional[bool] = None
-    picture: Optional[str] = None
-    locale: Optional[str] = None
+    name: str | None = None
+    email: str | None = None
+    email_verified: bool | None = None
+    picture: str | None = None
 
 
 class GoogleIdTokenClaims(BaseModel):
-    """Claims from Google ID token."""
+    """Essential claims from Google ID token."""
 
     iss: str
     sub: str
     aud: str
     exp: int
-    iat: int
-    azp: Optional[str] = None
-    email: Optional[str] = None
-    email_verified: Optional[bool] = None
-    name: Optional[str] = None
-    picture: Optional[str] = None
-    given_name: Optional[str] = None
-    family_name: Optional[str] = None
-    locale: Optional[str] = None
+    email: str | None = None
+    email_verified: bool | None = None
+    name: str | None = None
+    picture: str | None = None
 
 
 class GoogleLoginResponse(BaseModel):
     """Response for Google login endpoint."""
 
     authorization_url: str
-    state: Optional[str] = None
+    state: str | None = None
 
 
 class GoogleCallbackResponse(BaseModel):
@@ -58,7 +48,7 @@ class GoogleCallbackResponse(BaseModel):
     access_token: str
     token_type: str
     expires_in: int
-    id_token: Optional[str] = None
+    id_token: str | None = None
     user: GoogleUser
 
 
@@ -67,4 +57,4 @@ class GoogleUserResponse(BaseModel):
 
     provider: str = "google"
     user: GoogleUser
-    claims: Optional[GoogleIdTokenClaims] = None
+    claims: GoogleIdTokenClaims | None = None

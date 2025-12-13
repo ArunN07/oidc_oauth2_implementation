@@ -5,7 +5,6 @@ from logging import Logger
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import RedirectResponse
-
 from src.core.configuration.logger_dependency import get_logger
 from src.core.exceptions.exceptions import OAuth2CallbackError
 from src.fastapi.models.auth.common_models import AuthResponse, UnifiedUser

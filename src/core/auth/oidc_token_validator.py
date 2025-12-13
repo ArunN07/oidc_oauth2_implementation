@@ -1,5 +1,5 @@
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 import httpx
 from jose import JWTError, jwt
@@ -39,7 +39,7 @@ class OIDCTokenValidator:
         audience: str,
         jwks_uri: str,
         cache_ttl: int = 3600,
-        proxy: Optional[str] = None,
+        proxy: str | None = None,
     ):
         """
         Initialize the OIDC token validator.
@@ -63,7 +63,7 @@ class OIDCTokenValidator:
         self.cache_ttl = cache_ttl
         self.proxy = proxy
 
-        self._jwks_cache: Optional[dict] = None
+        self._jwks_cache: dict | None = None
         self._jwks_fetched_at: float = 0.0
 
     async def _fetch_jwks(self) -> dict:
@@ -132,7 +132,7 @@ class OIDCTokenValidator:
 
         return key
 
-    async def validate_token(self, token: str) -> Dict[str, Any]:
+    async def validate_token(self, token: str) -> dict[str, Any]:
         """
         Decode and validate a JWT token using JWKS and OIDC settings.
 
@@ -165,7 +165,7 @@ class OIDCTokenValidator:
         except JWTError as e:
             raise JWTError(f"Token validation failed: {e}") from e
 
-    def decode_token_unverified(self, token: str) -> Dict[str, Any]:
+    def decode_token_unverified(self, token: str) -> dict[str, Any]:
         """
         Decode a JWT token without verification (for extracting claims only).
 

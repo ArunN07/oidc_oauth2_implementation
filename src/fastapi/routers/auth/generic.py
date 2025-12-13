@@ -1,6 +1,5 @@
 import secrets
 from logging import Logger
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import RedirectResponse
@@ -42,7 +41,7 @@ async def list_providers(
 
 @router.get("/login")
 async def generic_login(
-    provider: Optional[str] = Query(None, description="Override AUTH_PROVIDER"),
+    provider: str | None = Query(None, description="Override AUTH_PROVIDER"),
     redirect: bool = Query(False, description="Redirect to provider"),
     logger: Logger = Depends(get_logger),
 ):
@@ -91,7 +90,7 @@ async def generic_login(
 async def generic_callback(
     code: str = Query(..., description="Authorization code"),
     state: str = Query(..., description="State parameter"),
-    provider: Optional[str] = Query(None, description="Override provider detection"),
+    provider: str | None = Query(None, description="Override provider detection"),
     logger: Logger = Depends(get_logger),
 ):
     """

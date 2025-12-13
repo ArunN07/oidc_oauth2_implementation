@@ -5,10 +5,10 @@ from logging import Logger
 from urllib.parse import urlencode
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import RedirectResponse
 from src.core.configuration.logger_dependency import get_logger
 from src.core.connector.database_connector import get_db
 from src.core.exceptions.exceptions import OAuth2CallbackError

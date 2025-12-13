@@ -176,6 +176,7 @@ credentials.json
 
 # Logs
 logs/
+**/logs/
 *.log
 
 # Temporary files

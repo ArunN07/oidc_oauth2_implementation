@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from pydantic import BaseModel
 
 
@@ -12,20 +10,13 @@ class GitHubTokenResponse(BaseModel):
 
 
 class GitHubUser(BaseModel):
-    """GitHub user information."""
+    """GitHub user information - essential fields only."""
 
     id: int
     login: str
-    name: Optional[str] = None
-    email: Optional[str] = None
-    avatar_url: Optional[str] = None
-    html_url: Optional[str] = None
-    bio: Optional[str] = None
-    company: Optional[str] = None
-    location: Optional[str] = None
-    public_repos: Optional[int] = None
-    followers: Optional[int] = None
-    following: Optional[int] = None
+    name: str | None = None
+    email: str | None = None
+    avatar_url: str | None = None
 
 
 class GitHubEmail(BaseModel):
@@ -34,14 +25,14 @@ class GitHubEmail(BaseModel):
     email: str
     primary: bool
     verified: bool
-    visibility: Optional[str] = None
+    visibility: str | None = None
 
 
 class GitHubLoginResponse(BaseModel):
     """Response for GitHub login endpoint."""
 
     authorization_url: str
-    state: Optional[str] = None
+    state: str | None = None
 
 
 class GitHubCallbackResponse(BaseModel):
@@ -57,5 +48,5 @@ class GitHubUserResponse(BaseModel):
 
     provider: str = "github"
     user: GitHubUser
-    emails: Optional[List[GitHubEmail]] = None
-    roles: List[str] = []
+    emails: list[GitHubEmail] | None = None
+    roles: list[str] = []

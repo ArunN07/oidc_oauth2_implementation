@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from src.core.settings.app import AuthProvider, get_settings
 
@@ -15,9 +14,9 @@ class ProviderConfig:
     authorization_url: str
     token_url: str
     scopes: str
-    user_info_url: Optional[str] = None
-    jwks_uri: Optional[str] = None
-    issuer: Optional[str] = None
+    user_info_url: str | None = None
+    jwks_uri: str | None = None
+    issuer: str | None = None
 
 
 class ProviderEndpoints:
