@@ -1816,7 +1816,7 @@ flowchart LR
 ```mermaid
 graph TB
     subgraph GitHub["GitHub Token"]
-        GT["gho_bwBuTkwLEi8OH4d..."]
+        GT["gho_xxxxxxxxxxxx"]
         GT --> GT1["Type: Opaque String"]
         GT --> GT2["Cannot decode"]
         GT --> GT3["Never expires"]
