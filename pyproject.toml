@@ -1,0 +1,61 @@
+[tool.poetry]
+name = "oidc-oauth2-implementation"
+version = "1.0.0"
+description = "FastAPI OIDC/OAuth2 Authentication with GitHub, Azure AD, and Google"
+authors = ["Arun <arun.omsai@gmail.com>"]
+readme = "README.md"
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.109.0"
+uvicorn = { extras = ["standard"], version = "^0.27.0" }
+httpx = "^0.26.0"
+python-dotenv = "^1.0.0"
+environs = "^11.0.0"
+marshmallow = "^3.21.0"
+pydantic = "^2.5.3"
+pydantic-settings = "^2.1.0"
+sqlalchemy = "^2.0.25"
+python-jose = { extras = ["cryptography"], version = "^3.3.0" }
+python-multipart = "^0.0.6"
+sqlmodel = "^0.0.22"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+pytest-asyncio = "^0.21.1"
+pytest-cov = "^4.1.0"
+
+[tool.poetry.group.lint.dependencies]
+black = "^23.12.1"
+isort = "^5.13.2"
+flake8 = "^7.0.0"
+pylint = "^3.0.3"
+mypy = "^1.8.0"
+yapf = "^0.40.2"
+pre-commit = "^3.6.0"
+
+[tool.black]
+line-length = 121
+target-version = ["py310", "py311", "py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 121
+
+[tool.flake8]
+max-line-length = 121
+extend-ignore = ["E203", "W503"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_return_any = true
+
+[tool.pylint.messages_control]
+disable = ["C0114", "C0115", "C0116"]
+max-line-length = 121
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

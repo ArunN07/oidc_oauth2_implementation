@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Git pre-commit hook - Works on Windows (Git Bash), Mac, Linux
+# Setup: cp scripts/pre-commit .git/hooks/ && chmod +x .git/hooks/pre-commit
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# Run isort
+echo ">> isort (import sorting)"
+poetry run isort --check-only src/ || {
+    echo "❌ isort failed. Run: poetry run isort src/"
+    exit 1
+}
+
+# Run black
+echo ">> black (code formatting)"
+poetry run black --check src/ || {
+    echo "❌ black failed. Run: poetry run black src/"
+    exit 1
+}
+
+# Run flake8
+echo ">> flake8 (linting)"
+poetry run flake8 src/ --max-line-length=100 --ignore=E501,W503 || {
+    echo "❌ flake8 failed. Fix the issues above."
+    exit 1
+}
+
+# Run mypy
+echo ">> mypy (type checking)"
+poetry run mypy src/ --ignore-missing-imports || {
+    echo "❌ mypy failed. Fix the type errors above."
+    exit 1
+}
+
+echo "✅ All checks passed!"
