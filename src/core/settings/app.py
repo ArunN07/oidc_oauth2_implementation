@@ -48,17 +48,14 @@ class AuthProvider(str, Enum):
         Microsoft Azure AD provider.
     GOOGLE : str
         Google OAuth2/OIDC provider.
-    OKTA : str
-        Okta OIDC provider (planned).
-    FACEBOOK : str
-        Facebook OAuth2 provider (planned).
+    AUTH0 : str
+        Auth0 OIDC provider.
     """
 
     GITHUB = "github"
     AZURE = "azure"
     GOOGLE = "google"
-    OKTA = "okta"
-    FACEBOOK = "facebook"
+    AUTH0 = "auth0"
 
 
 class Settings(BaseSettings):
@@ -121,10 +118,18 @@ class Settings(BaseSettings):
     azure_tenant_id: str = Field(default="", alias="AZURE_TENANT_ID")
     azure_client_id: str = Field(default="", alias="AZURE_CLIENT_ID")
     azure_client_secret: str = Field(default="", alias="AZURE_CLIENT_SECRET")
+    # OIDC callback (returns access_token + id_token + refresh_token)
     azure_redirect_uri: str = Field(
         default="http://localhost:8001/api/v1/auth/azure/callback", alias="AZURE_REDIRECT_URI"
     )
     azure_scopes: str = Field(default="openid profile email offline_access", alias="AZURE_SCOPES")
+    # OAuth2 callback (returns only access_token)
+    azure_oauth2_redirect_uri: str = Field(
+        default="http://localhost:8001/api/v1/auth/oauth2/callback", alias="AZURE_OAUTH2_REDIRECT_URI"
+    )
+    azure_oauth2_scopes: str = Field(
+        default="https://graph.microsoft.com/User.Read", alias="AZURE_OAUTH2_SCOPES"
+    )
     azure_admin_usernames: str = Field(default="", alias="AZURE_ADMIN_USERNAMES")
     azure_admin_groups: str = Field(default="", alias="AZURE_ADMIN_GROUPS")
     azure_admin_domains: str = Field(default="", alias="AZURE_ADMIN_DOMAINS")
@@ -132,8 +137,18 @@ class Settings(BaseSettings):
     # Google OAuth2/OIDC Configuration
     google_client_id: str = Field(default="", alias="GOOGLE_CLIENT_ID")
     google_client_secret: str = Field(default="", alias="GOOGLE_CLIENT_SECRET")
+    # OIDC callback (returns access_token + id_token + refresh_token)
     google_redirect_uri: str = Field(
         default="http://localhost:8001/api/v1/auth/google/callback", alias="GOOGLE_REDIRECT_URI"
+    )
+    google_scopes: str = Field(default="openid profile email", alias="GOOGLE_SCOPES")
+    # OAuth2 callback (returns only access_token)
+    google_oauth2_redirect_uri: str = Field(
+        default="http://localhost:8001/api/v1/auth/oauth2/callback", alias="GOOGLE_OAUTH2_REDIRECT_URI"
+    )
+    google_oauth2_scopes: str = Field(
+        default="https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email",
+        alias="GOOGLE_OAUTH2_SCOPES"
     )
     google_authorization_url: str = Field(
         default="https://accounts.google.com/o/oauth2/v2/auth", alias="GOOGLE_AUTHORIZATION_URL"
@@ -144,16 +159,62 @@ class Settings(BaseSettings):
     google_user_info_url: str = Field(
         default="https://www.googleapis.com/oauth2/v3/userinfo", alias="GOOGLE_USER_INFO_URL"
     )
-    google_scopes: str = Field(default="openid profile email", alias="GOOGLE_SCOPES")
     google_admin_emails: str = Field(default="", alias="GOOGLE_ADMIN_EMAILS")
     google_admin_domains: str = Field(default="", alias="GOOGLE_ADMIN_DOMAINS")
     google_allowed_domains: str = Field(default="", alias="GOOGLE_ALLOWED_DOMAINS")
 
+    # Auth0 OAuth2/OIDC Configuration
+    auth0_domain: str = Field(default="", alias="AUTH0_DOMAIN")
+    auth0_client_id: str = Field(default="", alias="AUTH0_CLIENT_ID")
+    auth0_client_secret: str = Field(default="", alias="AUTH0_CLIENT_SECRET")
+    # OIDC callback (returns access_token + id_token + refresh_token)
+    auth0_redirect_uri: str = Field(
+        default="http://localhost:8001/api/v1/auth/auth0/callback", alias="AUTH0_REDIRECT_URI"
+    )
+    auth0_scopes: str = Field(default="openid profile email offline_access", alias="AUTH0_SCOPES")
+    # OAuth2 callback (returns only access_token)
+    auth0_oauth2_redirect_uri: str = Field(
+        default="http://localhost:8001/api/v1/auth/oauth2/callback", alias="AUTH0_OAUTH2_REDIRECT_URI"
+    )
+    auth0_oauth2_scopes: str = Field(default="profile email", alias="AUTH0_OAUTH2_SCOPES")
+    auth0_audience: str = Field(default="", alias="AUTH0_AUDIENCE")
+    auth0_admin_emails: str = Field(default="", alias="AUTH0_ADMIN_EMAILS")
+
+    @property
+    def auth0_authorization_url(self) -> str:
+        """Get Auth0 authorization URL."""
+        return f"https://{self.auth0_domain}/authorize"
+
+    @property
+    def auth0_token_url(self) -> str:
+        """Get Auth0 token URL."""
+        return f"https://{self.auth0_domain}/oauth/token"
+
+    @property
+    def auth0_jwks_uri(self) -> str:
+        """Get Auth0 JWKS URI."""
+        return f"https://{self.auth0_domain}/.well-known/jwks.json"
+
+    @property
+    def auth0_issuer(self) -> str:
+        """Get Auth0 issuer."""
+        return f"https://{self.auth0_domain}/"
+
+    @property
+    def auth0_user_info_url(self) -> str:
+        """Get Auth0 user info URL."""
+        return f"https://{self.auth0_domain}/userinfo"
+
     # Database Configuration
-    database_type: str = Field(default="postgresql", alias="DATABASE_TYPE")
+    # Use BACKEND_DB_URL for direct connection string (recommended)
+    # Example: postgresql://postgres:password@localhost:5432/dbname
+    backend_db_url: str | None = Field(default=None, alias="BACKEND_DB_URL")
+
+    # Legacy settings (used if BACKEND_DB_URL is not set)
+    database_type: str = Field(default="sqlite", alias="DATABASE_TYPE")
     database_host: str = Field(default="localhost", alias="DATABASE_HOST")
     database_port: int = Field(default=5432, alias="DATABASE_PORT")
-    database_name: str = Field(default="oidc_demo", alias="DATABASE_NAME")
+    database_name: str = Field(default="oauth_demo.db", alias="DATABASE_NAME")
     database_user: str = Field(default="postgres", alias="DATABASE_USER")
     database_password: str = Field(default="postgres", alias="DATABASE_PASSWORD")
     database_url: str | None = Field(default=None, alias="DATABASE_URL")
@@ -198,9 +259,39 @@ class Settings(BaseSettings):
         return f"https://login.microsoftonline.com/{self.azure_tenant_id}/v2.0"
 
     def get_database_url(self) -> str:
-        """Build database URL from components or return configured URL."""
+        """
+        Build database URL from components or return configured URL.
+
+        Returns
+        -------
+        str
+            Database connection URL.
+
+        Notes
+        -----
+        Priority order:
+        1. BACKEND_DB_URL (recommended for production)
+        2. DATABASE_URL (legacy)
+        3. Constructed from individual settings
+
+        Examples:
+        - PostgreSQL: postgresql://user:password@localhost:5432/dbname
+        - SQLite: sqlite:///./oauth_demo.db
+        """
+        # Priority 1: BACKEND_DB_URL (recommended)
+        if self.backend_db_url:
+            return self.backend_db_url
+
+        # Priority 2: DATABASE_URL (legacy)
         if self.database_url:
             return self.database_url
+
+        # Priority 3: Construct from components
+        if self.database_type == "sqlite":
+            db_path = PROJECT_ROOT / self.database_name
+            return f"sqlite:///{db_path}"
+
+        # PostgreSQL or other databases
         return (
             f"{self.database_type}://{self.database_user}:{self.database_password}@"
             f"{self.database_host}:{self.database_port}/{self.database_name}"

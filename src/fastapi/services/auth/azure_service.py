@@ -3,25 +3,37 @@
 import secrets
 from typing import Any
 
-import httpx
-
 from src.core.auth.base import BaseAuthProvider
 from src.core.auth.factory import register_provider
+from src.core.auth.http_client import get_http_client
 from src.core.auth.oidc_client import GenericOIDCClient
 from src.core.auth.oidc_token_validator import OIDCTokenValidator
 from src.core.settings.app import get_settings
 
 
 class AzureAuthService(BaseAuthProvider):
-    """Azure AD OIDC authentication service with refresh_token support."""
+    """
+    Azure AD OIDC authentication service with refresh_token support.
+
+    Notes
+    -----
+    To get refresh_token from Azure AD:
+    1. Scope must include 'offline_access'
+    2. prompt=consent is used to ensure user grants offline access
+    """
 
     def __init__(self):
         """Initialize Azure AD OIDC client and token validator."""
         self.settings = get_settings()
 
-        proxy = None
+        self.proxy = None
         if not self.settings.disable_proxy:
-            proxy = self.settings.https_proxy or self.settings.http_proxy
+            self.proxy = self.settings.https_proxy or self.settings.http_proxy
+
+        # Ensure offline_access is in scopes for refresh_token
+        scopes = self.settings.azure_scopes
+        if "offline_access" not in scopes:
+            scopes = f"{scopes} offline_access"
 
         self._client = GenericOIDCClient(
             client_id=self.settings.azure_client_id,
@@ -29,15 +41,16 @@ class AzureAuthService(BaseAuthProvider):
             redirect_uri=self.settings.azure_redirect_uri,
             token_endpoint=self.settings.azure_token_url,
             authorization_endpoint=self.settings.azure_authorization_url,
-            scope=self.settings.azure_scopes,
+            scope=scopes,
             use_pkce=True,
+            proxy=self.proxy,
         )
 
         self._validator = OIDCTokenValidator(
             issuer=self.settings.azure_issuer,
             audience=self.settings.azure_client_id,
             jwks_uri=self.settings.azure_jwks_uri,
-            proxy=proxy,
+            proxy=self.proxy,
         )
 
     @property
@@ -66,7 +79,7 @@ class AzureAuthService(BaseAuthProvider):
     async def get_user_info(self, access_token: str) -> dict[str, Any]:
         """Get user info from Microsoft Graph API."""
         headers = {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with get_http_client(proxy=self.proxy) as client:
             response = await client.get("https://graph.microsoft.com/v1.0/me", headers=headers)
             response.raise_for_status()
             return response.json()

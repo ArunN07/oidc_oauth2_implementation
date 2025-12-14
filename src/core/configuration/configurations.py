@@ -1,3 +1,53 @@
+"""
+Provider configuration management for OAuth2/OIDC authentication.
+
+This module provides centralized configuration for OAuth2/OIDC providers.
+It encapsulates all provider-specific settings (endpoints, credentials,
+scopes) in a unified ProviderConfig dataclass.
+
+Why ProviderConfig?
+------------------
+ProviderConfig provides several benefits:
+1. **Type Safety**: All configuration is typed and validated
+2. **Centralization**: All provider settings in one place
+3. **Consistency**: Same interface for all providers
+4. **Easy Testing**: Mock configurations for tests
+
+Configuration Sources:
+---------------------
+All values come from environment variables via the Settings class:
+- GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, etc.
+- AZURE_CLIENT_ID, AZURE_TENANT_ID, etc.
+- GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, etc.
+
+Classes
+-------
+ProviderConfig
+    Dataclass containing all provider configuration.
+ProviderEndpoints
+    Static methods for getting provider-specific configs.
+
+Functions
+---------
+get_provider_config
+    Get configuration for a specific provider.
+get_active_provider
+    Get the currently active provider from settings.
+get_active_provider_config
+    Get configuration for the active provider.
+
+Examples
+--------
+Getting configuration for a specific provider:
+
+>>> from src.core.configuration.configurations import get_provider_config
+>>> from src.core.settings.app import AuthProvider
+>>>
+>>> config = get_provider_config(AuthProvider.GITHUB)
+>>> print(config.client_id)
+>>> print(config.authorization_url)
+"""
+
 from dataclasses import dataclass
 
 from src.core.settings.app import AuthProvider, get_settings
@@ -5,7 +55,53 @@ from src.core.settings.app import AuthProvider, get_settings
 
 @dataclass
 class ProviderConfig:
-    """OAuth2/OIDC Provider Configuration."""
+    """
+    OAuth2/OIDC provider configuration.
+
+    This dataclass contains all the configuration needed to interact with
+    an OAuth2/OIDC provider. It includes credentials, endpoints, and scopes.
+
+    Attributes
+    ----------
+    name : str
+        Provider identifier ('github', 'azure', 'google').
+    client_id : str
+        OAuth2 client ID registered with the provider.
+    client_secret : str
+        OAuth2 client secret (keep confidential!).
+    redirect_uri : str
+        Callback URL registered with the provider.
+    authorization_url : str
+        Provider's authorization endpoint URL.
+    token_url : str
+        Provider's token exchange endpoint URL.
+    scopes : str
+        Space-separated list of OAuth2/OIDC scopes.
+    user_info_url : str | None
+        URL to fetch user info (OAuth2 providers, optional for OIDC).
+    jwks_uri : str | None
+        URL to fetch JWKS for JWT validation (OIDC only).
+    issuer : str | None
+        Expected token issuer for validation (OIDC only).
+
+    Notes
+    -----
+    - GitHub (OAuth2): Has user_info_url, no jwks_uri/issuer
+    - Azure/Google (OIDC): Have jwks_uri and issuer for JWT validation
+
+    Examples
+    --------
+    >>> config = ProviderConfig(
+    ...     name="github",
+    ...     client_id="xxx",
+    ...     client_secret="yyy",
+    ...     redirect_uri="http://localhost:8000/callback",
+    ...     authorization_url="https://github.com/login/oauth/authorize",
+    ...     token_url="https://github.com/login/oauth/access_token",
+    ...     scopes="read:user user:email",
+    ...     user_info_url="https://api.github.com/user",
+    ... )
+    """
 
     name: str
     client_id: str

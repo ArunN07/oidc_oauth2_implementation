@@ -2,9 +2,11 @@ from logging import Logger
 from typing import Any, Callable, Literal
 
 from fastapi import Depends, Header, HTTPException, Query, Security, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPAuthorizationCredentials
+
 from src.core.auth.base import BaseAuthProvider
 from src.core.auth.factory import get_auth_provider
+from src.core.auth.security import bearer_scheme
 from src.core.configuration.logger_dependency import get_logger
 from src.core.exceptions.exceptions import ProviderNotSupportedError
 from src.core.settings.app import AuthProvider, get_settings
@@ -16,8 +18,6 @@ ProviderLiteral = Literal["github", "azure", "google", "okta", "facebook"]
 # Validate that ProviderLiteral values match AuthProvider enum at runtime
 _VALID_PROVIDERS = {p.value for p in AuthProvider}
 
-# Security scheme for bearer token
-bearer_scheme = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(

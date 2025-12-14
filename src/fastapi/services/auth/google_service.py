@@ -2,15 +2,11 @@
 
 import secrets
 from typing import Any
-from urllib.parse import urlencode
-
-import httpx
 
 from src.core.auth.base import BaseAuthProvider
 from src.core.auth.factory import register_provider
-from src.core.auth.oidc_client import GenericOIDCClient, _generate_pkce_pair
+from src.core.auth.oidc_client import GenericOIDCClient
 from src.core.auth.oidc_token_validator import OIDCTokenValidator
-from src.core.auth.pkce_store import get_pkce_store
 from src.core.settings.app import get_settings
 
 
@@ -21,9 +17,9 @@ class GoogleAuthService(BaseAuthProvider):
         """Initialize Google OIDC client and token validator."""
         self.settings = get_settings()
 
-        proxy = None
+        self.proxy = None
         if not self.settings.disable_proxy:
-            proxy = self.settings.https_proxy or self.settings.http_proxy
+            self.proxy = self.settings.https_proxy or self.settings.http_proxy
 
         self._client = GenericOIDCClient(
             client_id=self.settings.google_client_id,
@@ -34,13 +30,14 @@ class GoogleAuthService(BaseAuthProvider):
             scope=self.settings.google_scopes,
             user_info_endpoint=self.settings.google_user_info_url,
             use_pkce=True,
+            proxy=self.proxy,
         )
 
         self._validator = OIDCTokenValidator(
             issuer=self.settings.google_issuer,
             audience=self.settings.google_client_id,
             jwks_uri=self.settings.google_jwks_uri,
-            proxy=proxy,
+            proxy=self.proxy,
         )
 
     @property
@@ -58,42 +55,17 @@ class GoogleAuthService(BaseAuthProvider):
     def get_authorization_url(self, state: str | None = None) -> str:
         """Build authorization URL with access_type=offline for refresh_token."""
         state = state or secrets.token_hex(16)
-
-        code_verifier, code_challenge = _generate_pkce_pair()
-        get_pkce_store().store(state, code_verifier)
-
-        params = {
-            "client_id": self.settings.google_client_id,
-            "response_type": "code",
-            "redirect_uri": self.settings.google_redirect_uri,
-            "scope": self.settings.google_scopes,
-            "state": state,
-            "access_type": "offline",
-            "prompt": "consent",
-            "code_challenge": code_challenge,
-            "code_challenge_method": "S256",
-        }
-        return f"{self.settings.google_authorization_url}?{urlencode(params)}"
+        # Use GenericOIDCClient with extra_params for Google-specific options
+        auth_url, _ = self._client.build_login_redirect_url(
+            state=state,
+            prompt="consent",
+            extra_params={"access_type": "offline"},
+        )
+        return auth_url
 
     async def exchange_code_for_token(self, code: str, state: str | None = None) -> dict[str, Any]:
         """Exchange authorization code for tokens."""
-        code_verifier = get_pkce_store().retrieve(state) if state else None
-
-        data = {
-            "grant_type": "authorization_code",
-            "code": code,
-            "client_id": self.settings.google_client_id,
-            "client_secret": self.settings.google_client_secret,
-            "redirect_uri": self.settings.google_redirect_uri,
-        }
-        if code_verifier:
-            data["code_verifier"] = code_verifier
-
-        headers = {"Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json"}
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(self.settings.google_token_url, data=data, headers=headers)
-        response.raise_for_status()
-        return response.json()
+        return await self._client.exchange_code_for_token(code, state=state)
 
     async def validate_id_token(self, id_token: str) -> dict[str, Any]:
         """Validate id_token using JWKS."""

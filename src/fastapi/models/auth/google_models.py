@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -55,6 +57,6 @@ class GoogleCallbackResponse(BaseModel):
 class GoogleUserResponse(BaseModel):
     """Response for Google /me endpoint."""
 
-    provider: str = "google"
+    provider: Literal["google"] = "google"
     user: GoogleUser
     claims: GoogleIdTokenClaims | None = None

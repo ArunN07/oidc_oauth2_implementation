@@ -5,7 +5,8 @@ from typing import Any
 
 from src.core.auth.base import BaseAuthProvider
 from src.core.auth.factory import register_provider
-from src.core.auth.oidc_client import GenericOIDCClient, _get_http_client
+from src.core.auth.http_client import get_http_client
+from src.core.auth.oidc_client import GenericOIDCClient
 from src.core.settings.app import get_settings
 
 
@@ -15,6 +16,11 @@ class GitHubAuthService(BaseAuthProvider):
     def __init__(self):
         """Initialize GitHub OAuth2 client."""
         self.settings = get_settings()
+
+        self.proxy = None
+        if not self.settings.disable_proxy:
+            self.proxy = self.settings.https_proxy or self.settings.http_proxy
+
         self._client = GenericOIDCClient(
             client_id=self.settings.github_client_id,
             client_secret=self.settings.github_client_secret,
@@ -24,6 +30,7 @@ class GitHubAuthService(BaseAuthProvider):
             scope=self.settings.github_scopes,
             user_info_endpoint=self.settings.github_user_api_url,
             use_pkce=True,
+            proxy=self.proxy,
         )
 
     @property
@@ -53,7 +60,7 @@ class GitHubAuthService(BaseAuthProvider):
     async def get_user_emails(self, access_token: str) -> list[dict[str, Any]]:
         """Get GitHub user emails."""
         headers = {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
-        async with _get_http_client() as client:
+        async with get_http_client(proxy=self.proxy) as client:
             response = await client.get("https://api.github.com/user/emails", headers=headers)
             response.raise_for_status()
             return response.json()
@@ -61,7 +68,7 @@ class GitHubAuthService(BaseAuthProvider):
     async def get_user_organizations(self, access_token: str) -> list[str]:
         """Get GitHub user organizations."""
         headers = {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
-        async with _get_http_client() as client:
+        async with get_http_client(proxy=self.proxy) as client:
             response = await client.get("https://api.github.com/user/orgs", headers=headers)
             response.raise_for_status()
             return [org.get("login", "") for org in response.json()]

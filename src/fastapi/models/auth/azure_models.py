@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -53,6 +55,6 @@ class AzureCallbackResponse(BaseModel):
 class AzureUserResponse(BaseModel):
     """Response for Azure /me endpoint."""
 
-    provider: str = "azure"
+    provider: Literal["azure"] = "azure"
     user: AzureUser
     claims: AzureIdTokenClaims | None = None

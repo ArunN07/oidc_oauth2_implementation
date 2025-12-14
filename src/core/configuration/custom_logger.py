@@ -1,11 +1,16 @@
 import logging
 import sys
 from logging.config import dictConfig
+from pathlib import Path
+
+# Project root directory (4 levels up from this file)
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
+DEFAULT_LOG_FILE = str(PROJECT_ROOT / "logs" / "app.log")
 
 
 def get_logging_config(
     log_level: int = logging.INFO,
-    log_file: str = "logs/app.log",
+    log_file: str | None = None,
     handlers_to_use: list | None = None,
 ) -> dict:
     """
@@ -27,6 +32,9 @@ def get_logging_config(
     """
     if handlers_to_use is None:
         handlers_to_use = ["console", "file"]
+
+    if log_file is None:
+        log_file = DEFAULT_LOG_FILE
 
     handlers_config = {
         "console": {
@@ -65,7 +73,7 @@ def get_logging_config(
 
 def setup_logging(
     log_level: int = logging.INFO,
-    log_file: str = "logs/app.log",
+    log_file: str | None = None,
     handlers_to_use: list | None = None,
 ) -> None:
     """
@@ -98,7 +106,7 @@ class CustomLogger:
         self,
         logger_name: str = "app_logger",
         log_level: int = logging.INFO,
-        log_file: str = "logs/app.log",
+        log_file: str | None = None,
         handlers_to_use: list | None = None,
     ):
         """

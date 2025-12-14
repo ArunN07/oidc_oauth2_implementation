@@ -2,6 +2,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from src.core.settings.app import AuthProvider
+
 
 class UnifiedUser(BaseModel):
     """
@@ -11,7 +13,7 @@ class UnifiedUser(BaseModel):
     """
 
     id: str = Field(..., description="Unique user ID from provider")
-    provider: str = Field(..., description="OAuth provider name")
+    provider: AuthProvider = Field(..., description="OAuth provider name")
     username: str | None = Field(None, description="Username/login")
     email: str | None = Field(None, description="Primary email")
     name: str | None = Field(None, description="Display name")
@@ -25,7 +27,7 @@ class UnifiedUser(BaseModel):
         """Create UnifiedUser from GitHub user info."""
         return cls(
             id=str(user_info.get("id", "")),
-            provider="github",
+            provider=AuthProvider.GITHUB,
             username=user_info.get("login"),
             email=user_info.get("email"),
             name=user_info.get("name"),
@@ -40,7 +42,7 @@ class UnifiedUser(BaseModel):
         """Create UnifiedUser from Azure AD user info."""
         return cls(
             id=str(user_info.get("id", user_info.get("sub", ""))),
-            provider="azure",
+            provider=AuthProvider.AZURE,
             username=user_info.get("userPrincipalName"),
             email=user_info.get("mail") or user_info.get("userPrincipalName"),
             name=user_info.get("displayName") or user_info.get("name"),
@@ -56,8 +58,24 @@ class UnifiedUser(BaseModel):
         email = user_info.get("email", "")
         return cls(
             id=str(user_info.get("sub", user_info.get("id", ""))),
-            provider="google",
+            provider=AuthProvider.GOOGLE,
             username=email.split("@")[0] if email else None,
+            email=email,
+            name=user_info.get("name"),
+            avatar_url=user_info.get("picture"),
+            roles=roles,
+        )
+
+    @classmethod
+    def from_auth0(
+        cls, user_info: dict[str, Any], roles: list[str], groups: list[str] | None = None
+    ) -> "UnifiedUser":
+        """Create UnifiedUser from Auth0 user info."""
+        email = user_info.get("email", "")
+        return cls(
+            id=str(user_info.get("sub", "")),
+            provider=AuthProvider.AUTH0,
+            username=user_info.get("nickname") or email.split("@")[0] if email else None,
             email=email,
             name=user_info.get("name"),
             avatar_url=user_info.get("picture"),
@@ -67,18 +85,20 @@ class UnifiedUser(BaseModel):
     @classmethod
     def from_provider(
         cls,
-        provider: str,
+        provider: AuthProvider,
         user_info: dict[str, Any],
         roles: list[str],
         groups: list[str] | None = None,
     ) -> "UnifiedUser":
         """Create UnifiedUser from any provider."""
-        if provider == "github":
+        if provider == AuthProvider.GITHUB:
             return cls.from_github(user_info, roles, groups)
-        elif provider == "azure":
+        elif provider == AuthProvider.AZURE:
             return cls.from_azure(user_info, roles, groups)
-        elif provider == "google":
+        elif provider == AuthProvider.GOOGLE:
             return cls.from_google(user_info, roles, groups)
+        elif provider == AuthProvider.AUTH0:
+            return cls.from_auth0(user_info, roles, groups)
         else:
             # Generic fallback
             return cls(
@@ -115,6 +135,6 @@ class RoleCheckResponse(BaseModel):
     """Response for role check endpoints."""
 
     user_id: str
-    provider: str
+    provider: AuthProvider
     roles: list[str]
     is_admin: bool

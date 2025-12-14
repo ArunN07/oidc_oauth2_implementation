@@ -46,6 +46,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"Environment: {settings.app_env.value}")
     logger.info(f"Default Auth Provider: {settings.auth_provider.value}")
     logger.info(f"Debug Mode: {settings.debug}")
+    logger.info(f"Database: {settings.get_database_url().split('@')[-1] if '@' in settings.get_database_url() else settings.get_database_url()}")
 
     yield
 
@@ -83,10 +84,10 @@ This API demonstrates OAuth2 and OIDC authentication flows.
    - Enter: `Bearer <your_access_token>`
    - Click **Authorize**
 
-### Demo Endpoints:
-- **OAuth2 Test:** `/api/v1/auth/demo/test/oauth2/{{provider}}/login`
-- **OIDC Test:** `/api/v1/auth/demo/test/oidc/{{provider}}/login`
-- **Comparison:** `/api/v1/auth/demo/test/comparison`
+### OAuth2 vs OIDC Comparison Endpoints (Generic):
+- **OAuth2 Flow:** `/api/v1/auth/oauth2/{{provider}}/login` → Returns `access_token` only
+- **OIDC Flow:** `/api/v1/auth/oidc/{{provider}}/login` → Returns `access_token` + `id_token`
+- **Providers:** `/api/v1/auth/providers` → List available providers and their capabilities
 """
 
     app = FastAPI(
@@ -109,17 +110,19 @@ This API demonstrates OAuth2 and OIDC authentication flows.
             description=description,
             routes=app.routes,
         )
-        # Add Bearer token security scheme
-        openapi_schema["components"]["securitySchemes"] = {
-            "BearerAuth": {
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": "JWT",
-                "description": "Enter the access_token from OAuth2/OIDC login response",
-            }
+        # Add Bearer token security scheme for Swagger UI "Authorize" button
+        # scheme_name="BearerAuth" in HTTPBearer must match this key
+        if "components" not in openapi_schema:
+            openapi_schema["components"] = {}
+        if "securitySchemes" not in openapi_schema["components"]:
+            openapi_schema["components"]["securitySchemes"] = {}
+
+        openapi_schema["components"]["securitySchemes"]["BearerAuth"] = {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Enter the access_token from OAuth2/OIDC login response",
         }
-        # Apply security globally (optional - can also be per-endpoint)
-        openapi_schema["security"] = [{"BearerAuth": []}]
         app.openapi_schema = openapi_schema
         return app.openapi_schema
 

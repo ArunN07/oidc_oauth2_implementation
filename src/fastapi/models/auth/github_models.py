@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel
 
 
@@ -46,7 +48,7 @@ class GitHubCallbackResponse(BaseModel):
 class GitHubUserResponse(BaseModel):
     """Response for GitHub /me endpoint."""
 
-    provider: str = "github"
+    provider: Literal["github"] = "github"
     user: GitHubUser
     emails: list[GitHubEmail] | None = None
     roles: list[str] = []
