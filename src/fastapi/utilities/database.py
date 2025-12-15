@@ -36,12 +36,6 @@ from sqlmodel import Session, SQLModel, create_engine
 from src.core.exceptions.exceptions import DatabaseConnectionError
 from src.core.settings.app import get_settings
 
-# Import models to register with SQLModel metadata (required for table creation)
-# pylint: disable=unused-import
-from src.fastapi.models.database import session_models  # noqa: F401
-
-# pylint: enable=unused-import
-
 
 def _create_tables(engine: Engine) -> None:
     """

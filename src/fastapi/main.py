@@ -11,9 +11,6 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 
-# Import services to trigger provider registration with factory
-# pylint: disable=unused-import
-import src.fastapi.services  # noqa: F401
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -22,8 +19,6 @@ from src.core.configuration.logger_dependency import get_logger
 from src.core.exceptions.exceptions import AuthError, BaseAppException, ProviderNotSupportedError
 from src.core.settings.app import get_settings
 from src.fastapi.api import api_router
-
-# pylint: enable=unused-import
 
 
 @asynccontextmanager
