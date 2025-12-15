@@ -1,9 +1,15 @@
+"""
+Custom Logger Configuration.
+
+This module provides logging configuration and utilities for the application
+including file and console handlers with proper formatting.
+"""
+
 import logging
 import sys
 from logging.config import dictConfig
 from pathlib import Path
 
-# Project root directory (4 levels up from this file)
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 DEFAULT_LOG_FILE = str(PROJECT_ROOT / "logs" / "app.log")
 

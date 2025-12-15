@@ -1,9 +1,18 @@
+"""
+FastAPI Application Entry Point.
+
+This module creates and configures the FastAPI application with OAuth2/OIDC
+authentication support, middleware, exception handlers, and API routes.
+"""
+
 import os
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 import uvicorn
 
 # Import services to trigger provider registration with factory
+# pylint: disable=unused-import
 import src.fastapi.services  # noqa: F401
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,9 +23,11 @@ from src.core.exceptions.exceptions import AuthError, BaseAppException, Provider
 from src.core.settings.app import get_settings
 from src.fastapi.api import api_router
 
+# pylint: enable=unused-import
+
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Application lifespan manager.
 
@@ -25,32 +36,32 @@ async def lifespan(app: FastAPI):
 
     Parameters
     ----------
-    app : FastAPI
-        The FastAPI application instance.
+    _app : FastAPI
+        The FastAPI application instance (unused but required by FastAPI).
 
     Yields
     ------
     None
         Yields control to the application.
     """
-    # Startup
     settings = get_settings()
     logger = get_logger()
 
-    # Ensure logs directory exists
     log_dir = os.path.dirname(settings.log_file)
     if log_dir and not os.path.exists(log_dir):
         os.makedirs(log_dir, exist_ok=True)
 
-    logger.info(f"Starting {settings.title} v{settings.version}")
-    logger.info(f"Environment: {settings.app_env.value}")
-    logger.info(f"Default Auth Provider: {settings.auth_provider.value}")
-    logger.info(f"Debug Mode: {settings.debug}")
-    logger.info(f"Database: {settings.get_database_url().split('@')[-1] if '@' in settings.get_database_url() else settings.get_database_url()}")
+    logger.info("Starting %s v%s", settings.title, settings.version)
+    logger.info("Environment: %s", settings.app_env.value)
+    logger.info("Default Auth Provider: %s", settings.auth_provider.value)
+    logger.info("Debug Mode: %s", settings.debug)
+
+    db_url = settings.get_database_url()
+    db_display = db_url.split("@")[-1] if "@" in db_url else db_url
+    logger.info("Database: %s", db_display)
 
     yield
 
-    # Shutdown
     logger.info("Shutting down application")
 
 
@@ -101,7 +112,7 @@ This API demonstrates OAuth2 and OIDC authentication flows.
     )
 
     # Add Bearer token security scheme to OpenAPI
-    def custom_openapi():
+    def custom_openapi() -> dict:  # type: ignore[type-arg]
         if app.openapi_schema:
             return app.openapi_schema
         openapi_schema = get_openapi(
@@ -126,7 +137,7 @@ This API demonstrates OAuth2 and OIDC authentication flows.
         app.openapi_schema = openapi_schema
         return app.openapi_schema
 
-    app.openapi = custom_openapi
+    app.openapi = custom_openapi  # type: ignore[method-assign]
 
     # Configure CORS
     app.add_middleware(
@@ -139,7 +150,7 @@ This API demonstrates OAuth2 and OIDC authentication flows.
 
     # Register exception handlers
     @app.exception_handler(BaseAppException)
-    async def app_exception_handler(request: Request, exc: BaseAppException):
+    async def app_exception_handler(_request: Request, exc: BaseAppException) -> JSONResponse:
         return JSONResponse(
             status_code=400,
             content={
@@ -149,7 +160,7 @@ This API demonstrates OAuth2 and OIDC authentication flows.
         )
 
     @app.exception_handler(AuthError)
-    async def auth_exception_handler(request: Request, exc: AuthError):
+    async def auth_exception_handler(_request: Request, exc: AuthError) -> JSONResponse:
         return JSONResponse(
             status_code=401,
             content={
@@ -159,7 +170,7 @@ This API demonstrates OAuth2 and OIDC authentication flows.
         )
 
     @app.exception_handler(ProviderNotSupportedError)
-    async def provider_exception_handler(request: Request, exc: ProviderNotSupportedError):
+    async def provider_exception_handler(_request: Request, exc: ProviderNotSupportedError) -> JSONResponse:
         return JSONResponse(
             status_code=400,
             content={
@@ -180,19 +191,17 @@ app = create_app()
 
 
 if __name__ == "__main__":
-
     settings = get_settings()
 
-    # Try port 8001 first, fallback to 8002 if blocked
-    port = 8001
+    PORT = 8001
 
-    print(f"Starting server on http://127.0.0.1:{port}")
-    print(f"Swagger UI: http://127.0.0.1:{port}/docs")
-    print(f"OAuth2 Test: http://127.0.0.1:{port}/api/v1/auth/demo/test/comparison")
+    print(f"Starting server on http://127.0.0.1:{PORT}")
+    print(f"Swagger UI: http://127.0.0.1:{PORT}/docs")
+    print(f"OAuth2 Test: http://127.0.0.1:{PORT}/api/v1/auth/demo/test/comparison")
 
     uvicorn.run(
         "src.fastapi.main:app",
         host="127.0.0.1",
-        port=port,
+        port=PORT,
         reload=settings.debug,
     )

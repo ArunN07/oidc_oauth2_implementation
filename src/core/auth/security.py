@@ -26,9 +26,6 @@ Using the bearer scheme in a protected endpoint:
 
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-# Bearer token security scheme
-# - auto_error=True: Returns 401 automatically if no token provided
-# - scheme_name="BearerAuth": Displayed name in Swagger UI
 bearer_scheme = HTTPBearer(auto_error=True, scheme_name="BearerAuth")
 
 
@@ -54,4 +51,3 @@ def get_bearer_token(credentials: HTTPAuthorizationCredentials) -> str:
     ...     return {"token": token}
     """
     return credentials.credentials
-

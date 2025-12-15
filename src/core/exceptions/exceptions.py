@@ -1,3 +1,10 @@
+"""
+Custom Exceptions for OAuth2/OIDC Application.
+
+This module defines custom exceptions used throughout the application for
+consistent error handling and reporting.
+"""
+
 
 class BaseAppException(Exception):
     """

@@ -1,3 +1,10 @@
+"""
+Google Authentication Models.
+
+This module provides Pydantic models for Google OAuth2/OIDC
+token responses and user information.
+"""
+
 from typing import Literal
 
 from pydantic import BaseModel, Field

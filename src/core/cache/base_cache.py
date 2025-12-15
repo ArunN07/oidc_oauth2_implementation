@@ -1,3 +1,10 @@
+"""
+Base Cache Interface.
+
+This module defines the abstract base class for cache implementations
+providing a consistent interface for all caching backends.
+"""
+
 from abc import ABC, abstractmethod
 
 

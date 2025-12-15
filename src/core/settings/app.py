@@ -1,3 +1,10 @@
+"""
+Application Settings and Configuration.
+
+This module provides centralized configuration management for the application.
+Settings are loaded from environment variables and .env files using Pydantic.
+"""
+
 import logging
 from enum import Enum
 from functools import lru_cache
@@ -7,10 +14,8 @@ from environs import Env
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
-# Project root directory (4 levels up from this file)
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 
-# Load environment early for configuration
 _env = Env()
 _env.read_env(recurse=True, override=True)
 
@@ -91,10 +96,7 @@ class Settings(BaseSettings):
 
     # Logging Settings
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
-    log_file: str = Field(
-        default=str(PROJECT_ROOT / "logs" / "app.log"),
-        alias="LOG_FILE"
-    )
+    log_file: str = Field(default=str(PROJECT_ROOT / "logs" / "app.log"), alias="LOG_FILE")
 
     # Auth Provider Switch
     auth_provider: AuthProvider = Field(default=AuthProvider.GITHUB, alias="AUTH_PROVIDER")
@@ -127,9 +129,7 @@ class Settings(BaseSettings):
     azure_oauth2_redirect_uri: str = Field(
         default="http://localhost:8001/api/v1/auth/oauth2/callback", alias="AZURE_OAUTH2_REDIRECT_URI"
     )
-    azure_oauth2_scopes: str = Field(
-        default="https://graph.microsoft.com/User.Read", alias="AZURE_OAUTH2_SCOPES"
-    )
+    azure_oauth2_scopes: str = Field(default="https://graph.microsoft.com/User.Read", alias="AZURE_OAUTH2_SCOPES")
     azure_admin_usernames: str = Field(default="", alias="AZURE_ADMIN_USERNAMES")
     azure_admin_groups: str = Field(default="", alias="AZURE_ADMIN_GROUPS")
     azure_admin_domains: str = Field(default="", alias="AZURE_ADMIN_DOMAINS")
@@ -148,7 +148,7 @@ class Settings(BaseSettings):
     )
     google_oauth2_scopes: str = Field(
         default="https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email",
-        alias="GOOGLE_OAUTH2_SCOPES"
+        alias="GOOGLE_OAUTH2_SCOPES",
     )
     google_authorization_url: str = Field(
         default="https://accounts.google.com/o/oauth2/v2/auth", alias="GOOGLE_AUTHORIZATION_URL"
@@ -229,6 +229,8 @@ class Settings(BaseSettings):
     session_expire_minutes: int = Field(default=60, alias="SESSION_EXPIRE_MINUTES")
 
     class Config:
+        """Pydantic settings configuration."""
+
         env_file = ".env"
         env_file_encoding = "utf-8"
         extra = "ignore"

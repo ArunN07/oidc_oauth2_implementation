@@ -1,3 +1,10 @@
+"""
+Azure AD Authentication Models.
+
+This module provides Pydantic models for Azure AD OAuth2/OIDC
+token responses and user information.
+"""
+
 from typing import Literal
 
 from pydantic import BaseModel, Field

@@ -94,6 +94,8 @@ class InMemoryCache:
 
     _instance: "InMemoryCache | None" = None
     _lock = Lock()
+    _store: dict[str, tuple[str, float]]
+    _store_lock: Lock
 
     def __new__(cls) -> "InMemoryCache":
         """
@@ -153,7 +155,7 @@ class InMemoryCache:
             if key in self._store:
                 value, expires_at = self._store[key]
                 if time.time() < expires_at:
-                    return value
+                    return str(value)
                 del self._store[key]
             return None
 
@@ -179,7 +181,7 @@ class InMemoryCache:
             if key in self._store:
                 value, expires_at = self._store.pop(key)
                 if time.time() < expires_at:
-                    return value
+                    return str(value)
             return None
 
     def delete(self, key: str) -> bool:
@@ -214,15 +216,10 @@ class InMemoryCache:
         Called internally before set/get/pop operations.
         """
         current_time = time.time()
-        expired_keys = [
-            key
-            for key, (_, expires_at) in self._store.items()
-            if current_time >= expires_at
-        ]
+        expired_keys = [key for key, (_, expires_at) in self._store.items() if current_time >= expires_at]
         for key in expired_keys:
             del self._store[key]
 
 
 # Singleton instance - use this in your code
 cache = InMemoryCache()
-

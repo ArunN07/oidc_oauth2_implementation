@@ -1,9 +1,15 @@
+"""
+Authorization Utilities for FastAPI.
+
+This module provides authentication and authorization dependencies for
+FastAPI endpoints including bearer token validation and role-based access.
+"""
+
 from logging import Logger
 from typing import Any, Callable, Literal
 
 from fastapi import Depends, Header, HTTPException, Query, Security, status
 from fastapi.security import HTTPAuthorizationCredentials
-
 from src.core.auth.base import BaseAuthProvider
 from src.core.auth.factory import get_auth_provider
 from src.core.auth.security import bearer_scheme
@@ -17,7 +23,6 @@ ProviderLiteral = Literal["github", "azure", "google", "okta", "facebook"]
 
 # Validate that ProviderLiteral values match AuthProvider enum at runtime
 _VALID_PROVIDERS = {p.value for p in AuthProvider}
-
 
 
 async def get_current_user(
@@ -70,7 +75,7 @@ async def get_current_user(
         auth_service = get_auth_provider(provider=provider)
         user_info = await auth_service.get_user_info(access_token)
 
-        logger.info(f"Authenticated user via {auth_service.provider_name}")
+        logger.info("Authenticated user via %s", auth_service.provider_name)
 
         return {
             "provider": auth_service.provider_name,
@@ -78,15 +83,15 @@ async def get_current_user(
             "access_token": access_token,
         }
     except ProviderNotSupportedError as e:
-        logger.error(f"Provider not supported: {e.provider}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        logger.error(f"Authentication failed: {str(e)}")
+        logger.error("Provider not supported: %s", e.provider)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error("Authentication failed: %s", str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
 
 
 def authorize_user_access(required_roles: list[str] | None = None) -> Callable:
@@ -131,7 +136,7 @@ def authorize_user_access(required_roles: list[str] | None = None) -> Callable:
             user_roles = _extract_user_roles(user, provider)
 
             if not any(role in user_roles for role in required_roles):
-                logger.warning(f"User lacks required roles. Has: {user_roles}, Needs: {required_roles}")
+                logger.warning("User lacks required roles. Has: %s, Needs: %s", user_roles, required_roles)
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail=f"Missing required role. Required: {required_roles}",
@@ -210,11 +215,11 @@ def get_provider_dependency(
     """
     try:
         auth_provider = get_auth_provider(provider=provider)
-        logger.info(f"Using auth provider: {auth_provider.provider_name}")
+        logger.info("Using auth provider: %s", auth_provider.provider_name)
         return auth_provider
     except ProviderNotSupportedError as e:
-        logger.error(f"Provider not supported: {e.provider}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        logger.error("Provider not supported: %s", e.provider)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
 
 def get_active_provider_name() -> str:
@@ -303,8 +308,8 @@ class AuthDependency:
         try:
             return get_auth_provider(provider=self.provider)
         except ProviderNotSupportedError as e:
-            logger.error(f"Provider not supported: {e.provider}")
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            logger.error("Provider not supported: %s", e.provider)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
 
 # Pre-configured dependencies for specific providers

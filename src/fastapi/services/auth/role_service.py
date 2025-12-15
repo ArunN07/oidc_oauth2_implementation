@@ -1,4 +1,9 @@
-"""Role assignment service based on provider and .env configuration."""
+"""
+Role Assignment Service.
+
+This module provides role-based access control (RBAC) by assigning roles
+to users based on their provider and configuration in environment variables.
+"""
 
 from enum import Enum
 from typing import Any
@@ -8,6 +13,7 @@ from src.core.settings.app import get_settings
 
 class Role(str, Enum):
     """User roles."""
+
     USER = "user"
     ADMIN = "admin"
 
@@ -16,20 +22,20 @@ class RoleService:
     """Assigns roles based on .env configuration."""
 
     _instance: "RoleService | None" = None
+    _initialized: bool = False
 
     def __new__(cls) -> "RoleService":
         """Singleton pattern."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize role service with settings."""
         if self._initialized:
             return
         self.settings = get_settings()
-        self._initialized = True
+        RoleService._initialized = True
 
     def get_user_roles(self, provider: str, user_data: dict[str, Any]) -> list[str]:
         """Get roles for user based on provider and .env config."""
@@ -49,10 +55,10 @@ class RoleService:
         """Get groups/organizations for user."""
         match provider:
             case "github":
-                return user_data.get("organizations", [])
+                return list(user_data.get("organizations", []))
             case "azure":
                 claims = user_data.get("claims", {})
-                return claims.get("groups", [])
+                return list(claims.get("groups", []))
             case "google":
                 email = user_data.get("email", "")
                 domain = email.split("@")[-1] if "@" in email else ""

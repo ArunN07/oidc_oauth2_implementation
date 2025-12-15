@@ -1,5 +1,7 @@
 """Root and utility endpoints."""
 
+from typing import Any
+
 from fastapi import APIRouter
 from src.core.settings.app import get_settings
 
@@ -7,7 +9,7 @@ router = APIRouter(tags=["🏠 Root"])
 
 
 @router.get("/")
-async def root():
+async def root() -> dict[str, Any]:
     """Root endpoint - application information."""
     settings = get_settings()
     return {
@@ -26,7 +28,7 @@ async def root():
 
 
 @router.get("/health")
-async def health():
+async def health() -> dict[str, str]:
     """Health check endpoint."""
     settings = get_settings()
     return {
@@ -38,7 +40,7 @@ async def health():
 
 
 @router.get("/providers")
-async def providers():
+async def providers() -> dict[str, Any]:
     """List available authentication providers and their endpoints."""
     settings = get_settings()
     return {

@@ -108,8 +108,7 @@ class UserSession(SQLModel, table=True):
     def __repr__(self) -> str:
         """Return string representation of the session."""
         return (
-            f"<UserSession(id={self.id}, user={self.username}, "
-            f"provider={self.provider}, active={self.is_active})>"
+            f"<UserSession(id={self.id}, user={self.username}, " f"provider={self.provider}, active={self.is_active})>"
         )
 
 
@@ -161,8 +160,4 @@ class AuthenticationLog(SQLModel, table=True):
 
     def __repr__(self) -> str:
         """Return string representation of the log entry."""
-        return (
-            f"<AuthenticationLog(id={self.id}, provider={self.provider}, "
-            f"success={self.success})>"
-        )
-
+        return f"<AuthenticationLog(id={self.id}, provider={self.provider}, " f"success={self.success})>"

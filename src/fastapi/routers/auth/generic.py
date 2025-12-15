@@ -21,13 +21,15 @@ Also provides:
 
 import secrets
 from logging import Logger
+from typing import Any, cast
 from urllib.parse import urlencode
+
+from sqlmodel import Session
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from fastapi.security import HTTPAuthorizationCredentials
-from sqlmodel import Session
-
+from src.core.auth.base import BaseAuthProvider
 from src.core.auth.http_client import get_http_client
 from src.core.auth.security import bearer_scheme
 from src.core.configuration.logger_dependency import get_logger
@@ -40,28 +42,17 @@ from src.fastapi.services.auth.github_service import GitHubAuthService
 from src.fastapi.services.auth.google_service import GoogleAuthService
 from src.fastapi.services.auth.role_service import get_role_service
 from src.fastapi.services.database.session_service import SessionService
-from src.fastapi.utilities.session_helpers import (
-    create_session_and_log,
-    get_request_info,
-    log_auth_failure,
-    log_logout,
-)
 from src.fastapi.utilities.database import get_db
+from src.fastapi.utilities.session_helpers import create_session_and_log, get_request_info, log_auth_failure, log_logout
 
 router = APIRouter(tags=["OAuth2 vs OIDC Comparison"])
 
-# State -> Provider/Mode mapping for callbacks
 _state_map: dict[str, dict[str, str]] = {}
 
 
-# =============================================================================
-# Helper Functions - Provider Configuration
-# =============================================================================
-
-
-def _get_service(provider: AuthProvider):
+def _get_service(provider: AuthProvider) -> BaseAuthProvider:
     """Get the appropriate auth service for a provider."""
-    services = {
+    services: dict[AuthProvider, type[BaseAuthProvider]] = {
         AuthProvider.GITHUB: GitHubAuthService,
         AuthProvider.AZURE: AzureAuthService,
         AuthProvider.GOOGLE: GoogleAuthService,
@@ -126,12 +117,11 @@ def _build_oauth2_auth_url(provider: AuthProvider, state: str) -> str:
     return f"{config['authorization_url']}?{urlencode(params)}"
 
 
-async def _exchange_oauth2_code(provider: AuthProvider, code: str) -> dict:
+async def _exchange_oauth2_code(provider: AuthProvider, code: str) -> dict[str, Any]:
     """Exchange authorization code for tokens (OAuth2 flow)."""
     config = _get_oauth2_config(provider)
     settings = get_settings()
 
-    # Get proxy settings
     proxy = None
     if not settings.disable_proxy:
         proxy = settings.https_proxy or settings.http_proxy
@@ -144,29 +134,23 @@ async def _exchange_oauth2_code(provider: AuthProvider, code: str) -> dict:
         "redirect_uri": config["redirect_uri"],
     }
 
-    # Azure requires scope in token request
     if provider == AuthProvider.AZURE:
         data["scope"] = config["scope"]
 
     async with get_http_client(proxy=proxy) as client:
         resp = await client.post(config["token_url"], data=data)
-        return resp.json()
+        return cast(dict[str, Any], resp.json())
 
 
-async def _get_user_data(provider: AuthProvider, service, access_token: str) -> dict:
+async def _get_user_data(provider: AuthProvider, service: BaseAuthProvider, access_token: str) -> dict[str, Any]:
     """Get user data from provider."""
     if provider == AuthProvider.GITHUB:
-        return await service.get_user_with_orgs(access_token)
-    return await service.get_user_info(access_token)
-
-
-# =============================================================================
-# Provider Info & Logout
-# =============================================================================
+        return cast(dict[str, Any], await service.get_user_with_orgs(access_token))  # type: ignore[attr-defined]
+    return cast(dict[str, Any], await service.get_user_info(access_token))
 
 
 @router.get("/providers")
-async def list_providers():
+async def list_providers() -> dict[str, Any]:
     """List available authentication providers and their capabilities."""
     settings = get_settings()
 
@@ -193,7 +177,7 @@ async def logout(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: Session = Depends(get_db),
     logger: Logger = Depends(get_logger),
-):
+) -> dict[str, Any]:
     """
     Logout user by invalidating the session associated with the bearer token.
 
@@ -228,16 +212,11 @@ async def logout(
     return {"status": "no_session", "message": "No active session found", "sessions_ended": 0}
 
 
-# =============================================================================
-# OAuth2 Flow (No openid scope - access_token only)
-# =============================================================================
-
-
 @router.get("/oauth2/{provider}/login")
 async def oauth2_login(
     provider: AuthProvider,
     logger: Logger = Depends(get_logger),
-):
+) -> RedirectResponse:
     """
     Start OAuth2 flow (without openid scope).
 
@@ -246,11 +225,9 @@ async def oauth2_login(
     state = secrets.token_hex(16)
 
     if provider == AuthProvider.GITHUB:
-        # GitHub only supports OAuth2, use its service directly
         service = GitHubAuthService()
         auth_url = service.get_authorization_url(state=state)
     else:
-        # Azure/Google - build OAuth2-specific URL (no openid scope)
         auth_url = _build_oauth2_auth_url(provider, state)
 
     _state_map[state] = {"provider": provider.value, "mode": "oauth2"}
@@ -266,7 +243,7 @@ async def oauth2_callback(
     state: str = Query(...),
     db: Session = Depends(get_db),
     logger: Logger = Depends(get_logger),
-):
+) -> dict[str, Any]:
     """
     OAuth2 callback - returns access_token only.
 
@@ -280,7 +257,7 @@ async def oauth2_callback(
     request_info = get_request_info(request)
 
     try:
-        # Get tokens
+        service: BaseAuthProvider
         if provider == AuthProvider.GITHUB:
             service = GitHubAuthService()
             token_response = await service.exchange_code_for_token(code, state=state)
@@ -289,22 +266,21 @@ async def oauth2_callback(
             service = _get_service(provider)
 
         if "error" in token_response:
-            log_auth_failure(db, provider.value, token_response.get("error_description", "Token exchange failed"), request_info)
+            log_auth_failure(
+                db, provider.value, token_response.get("error_description", "Token exchange failed"), request_info
+            )
             raise OAuth2CallbackError(message=f"{provider.value} token exchange failed")
 
         access_token = token_response.get("access_token")
         if not access_token:
             raise OAuth2CallbackError(message="No access token received")
 
-        # Get user info via API call (OAuth2 requires this)
         user_data = await _get_user_data(provider, service, access_token)
 
-        # Build response
         role_service = get_role_service()
         roles = role_service.get_user_roles(provider.value, user_data)
         unified_user = UnifiedUser.from_provider(provider, user_data, roles, [])
 
-        # Create session and log authentication
         create_session_and_log(db, provider.value, unified_user, token_response, request_info, roles)
 
         logger.info(f"OAuth2 auth successful: {unified_user.username or unified_user.email}")
@@ -322,20 +298,15 @@ async def oauth2_callback(
     except OAuth2CallbackError:
         raise
     except Exception as e:
-        logger.error(f"OAuth2 callback error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-# =============================================================================
-# OIDC Flow (With openid scope - access_token + id_token + refresh_token)
-# =============================================================================
+        logger.error("OAuth2 callback error: %s", e)
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.get("/oidc/{provider}/login")
 async def oidc_login(
     provider: AuthProvider,
     logger: Logger = Depends(get_logger),
-):
+) -> RedirectResponse:
     """
     Start OIDC flow (with openid scope).
 
@@ -364,7 +335,7 @@ async def oidc_callback(
     state: str = Query(...),
     db: Session = Depends(get_db),
     logger: Logger = Depends(get_logger),
-):
+) -> AuthResponse:
     """
     OIDC callback - returns access_token + id_token + refresh_token.
 
@@ -385,7 +356,9 @@ async def oidc_callback(
         token_response = await service.exchange_code_for_token(code, state=state)
 
         if "error" in token_response:
-            log_auth_failure(db, provider.value, token_response.get("error_description", "Token exchange failed"), request_info)
+            log_auth_failure(
+                db, provider.value, token_response.get("error_description", "Token exchange failed"), request_info
+            )
             raise OAuth2CallbackError(message=f"{provider.value} token exchange failed")
 
         access_token = token_response.get("access_token")
@@ -395,14 +368,15 @@ async def oidc_callback(
         if not id_token:
             raise OAuth2CallbackError(message="No id_token - OIDC requires openid scope")
 
-        # Get user from id_token claims (no API call needed!)
-        user_data = await service.get_user_from_token(token_response)
+        if not access_token:
+            raise OAuth2CallbackError(message="No access_token received")
+
+        user_data = await service.get_user_from_token(token_response)  # type: ignore[attr-defined]
 
         role_service = get_role_service()
         roles = role_service.get_user_roles(provider.value, user_data)
         unified_user = UnifiedUser.from_provider(provider, user_data, roles, [])
 
-        # Create session and log authentication
         create_session_and_log(db, provider.value, unified_user, token_response, request_info, roles)
 
         logger.info(f"OIDC auth successful: {unified_user.username or unified_user.email}")
@@ -418,6 +392,6 @@ async def oidc_callback(
 
     except OAuth2CallbackError:
         raise
-    except Exception as e:
-        logger.error(f"OIDC callback error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error("OIDC callback error: %s", e)
+        raise HTTPException(status_code=400, detail=str(e)) from e

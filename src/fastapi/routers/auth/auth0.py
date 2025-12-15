@@ -15,17 +15,17 @@ GET /callback
 import secrets
 from logging import Logger
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from fastapi.responses import RedirectResponse
 from sqlmodel import Session
 
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi.responses import RedirectResponse
 from src.core.configuration.logger_dependency import get_logger
 from src.core.exceptions.exceptions import OAuth2CallbackError
 from src.fastapi.models.auth.common_models import AuthResponse, UnifiedUser
 from src.fastapi.services.auth.auth0_service import Auth0AuthService
 from src.fastapi.services.auth.role_service import get_role_service
-from src.fastapi.utilities.session_helpers import create_session_and_log, get_request_info, log_auth_failure
 from src.fastapi.utilities.database import get_db
+from src.fastapi.utilities.session_helpers import create_session_and_log, get_request_info, log_auth_failure
 
 router = APIRouter(prefix="/auth0", tags=["Auth0 OIDC"])
 
@@ -39,7 +39,7 @@ def get_auth0_service() -> Auth0AuthService:
 async def auth0_login(
     service: Auth0AuthService = Depends(get_auth0_service),
     logger: Logger = Depends(get_logger),
-):
+) -> RedirectResponse:
     """
     Initiate Auth0 OIDC login flow.
 
@@ -59,7 +59,7 @@ async def auth0_callback(
     service: Auth0AuthService = Depends(get_auth0_service),
     db: Session = Depends(get_db),
     logger: Logger = Depends(get_logger),
-):
+) -> AuthResponse:
     """
     Handle Auth0 OIDC callback.
 
@@ -102,8 +102,7 @@ async def auth0_callback(
 
     except OAuth2CallbackError:
         raise
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         log_auth_failure(db, "auth0", str(e), request_info)
-        logger.error(f"Auth0 callback error: {e}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
+        logger.error("Auth0 callback error: %s", e)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e

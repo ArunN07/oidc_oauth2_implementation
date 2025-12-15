@@ -1,11 +1,12 @@
 """
-Auth0 OAuth2/OIDC authentication service.
+Auth0 OAuth2/OIDC Authentication Service.
 
-Auth0 is a flexible identity platform that supports both OAuth2 and OIDC.
-It provides access_token, id_token, and refresh_token.
+This module provides Auth0 authentication support for both OAuth2 and OIDC flows.
+Auth0 is a flexible identity platform that returns access_token, id_token,
+and refresh_token.
 
-Attributes
-----------
+Environment Variables
+---------------------
 AUTH0_DOMAIN : str
     Your Auth0 tenant domain (e.g., dev-xxx.us.auth0.com).
 AUTH0_CLIENT_ID : str
@@ -14,8 +15,11 @@ AUTH0_CLIENT_SECRET : str
     Application client secret from Auth0 dashboard.
 """
 
+import base64
+import binascii
+import json
 import secrets
-from typing import Any
+from typing import Any, cast
 
 from src.core.auth.base import BaseAuthProvider
 from src.core.auth.factory import register_provider
@@ -32,7 +36,7 @@ class Auth0AuthService(BaseAuthProvider):
     Returns access_token, id_token, and refresh_token.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Auth0 OIDC client and token validator."""
         self.settings = get_settings()
 
@@ -72,12 +76,12 @@ class Auth0AuthService(BaseAuthProvider):
     @property
     def client(self) -> GenericOIDCClient:
         """Return OIDC client."""
-        return self._client
+        return cast(GenericOIDCClient, self._client)
 
     @property
     def validator(self) -> OIDCTokenValidator:
         """Return token validator."""
-        return self._validator
+        return cast(OIDCTokenValidator, self._validator)
 
     def get_authorization_url(self, state: str | None = None) -> str:
         """
@@ -105,7 +109,7 @@ class Auth0AuthService(BaseAuthProvider):
             state=state,
             extra_params=extra_params if extra_params else None,
         )
-        return auth_url
+        return cast(str, auth_url)
 
     async def exchange_code_for_token(self, code: str, state: str | None = None) -> dict[str, Any]:
         """
@@ -123,7 +127,7 @@ class Auth0AuthService(BaseAuthProvider):
         dict
             Token response with access_token, id_token, refresh_token.
         """
-        return await self._client.exchange_code_for_token(code, state=state)
+        return cast(dict[str, Any], await self._client.exchange_code_for_token(code, state=state))
 
     async def validate_id_token(self, id_token: str) -> dict[str, Any]:
         """
@@ -139,7 +143,7 @@ class Auth0AuthService(BaseAuthProvider):
         dict
             Validated token claims.
         """
-        return await self._validator.validate_token(id_token)
+        return cast(dict[str, Any], await self._validator.validate_token(id_token))
 
     async def get_user_info(self, access_token: str) -> dict[str, Any]:
         """
@@ -155,7 +159,7 @@ class Auth0AuthService(BaseAuthProvider):
         dict
             User information.
         """
-        return await self._client.get_user_info(access_token)
+        return cast(dict[str, Any], await self._client.get_user_info(access_token))
 
     async def get_user_from_token(self, token_response: dict[str, Any]) -> dict[str, Any]:
         """
@@ -201,12 +205,9 @@ class Auth0AuthService(BaseAuthProvider):
 
         Returns
         -------
-        dict
+        dict[str, Any]
             Token claims.
         """
-        import base64
-        import json
-
         parts = id_token.split(".")
         if len(parts) != 3:
             return {}
@@ -218,11 +219,9 @@ class Auth0AuthService(BaseAuthProvider):
 
         try:
             decoded = base64.urlsafe_b64decode(payload)
-            return json.loads(decoded)
-        except Exception:
+            return cast(dict[str, Any], json.loads(decoded))
+        except (ValueError, binascii.Error, json.JSONDecodeError, UnicodeDecodeError):
             return {}
 
 
-# Register Auth0 provider
 register_provider("auth0", Auth0AuthService)
-

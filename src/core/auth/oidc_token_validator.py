@@ -1,5 +1,12 @@
+"""
+OIDC Token Validator.
+
+This module provides JWT token validation using OIDC standards including
+JWKS-based signature verification, issuer validation, and audience checks.
+"""
+
 import time
-from typing import Any
+from typing import Any, cast
 
 import httpx
 from jose import JWTError, jwt
@@ -66,7 +73,7 @@ class OIDCTokenValidator:
         self._jwks_cache: dict | None = None
         self._jwks_fetched_at: float = 0.0
 
-    async def _fetch_jwks(self) -> dict:
+    async def _fetch_jwks(self) -> dict[Any, Any]:
         """
         Fetch JWKS from the configured URI.
 
@@ -80,7 +87,7 @@ class OIDCTokenValidator:
             async with httpx.AsyncClient(transport=transport) as client:
                 response = await client.get(self.jwks_uri)
                 response.raise_for_status()
-                return response.json()
+                return cast(dict[Any, Any], response.json())
         except httpx.RequestError as e:
             raise JWTError(f"Failed to fetch JWKS: {e}") from e
 
@@ -106,7 +113,7 @@ class OIDCTokenValidator:
         self._jwks_fetched_at = now
         return self._jwks_cache
 
-    async def _get_key(self, kid: str) -> dict:
+    async def _get_key(self, kid: str) -> dict[Any, Any]:
         """
         Get a public key from JWKS by `kid`, with automatic refresh if not found.
 
@@ -130,7 +137,7 @@ class OIDCTokenValidator:
         if not key:
             raise JWTError(f"Public key with kid '{kid}' not found.")
 
-        return key
+        return cast(dict[Any, Any], key)
 
     async def validate_token(self, token: str) -> dict[str, Any]:
         """
@@ -161,7 +168,7 @@ class OIDCTokenValidator:
                 audience=self.audience,
                 issuer=self.issuer,
             )
-            return payload
+            return cast(dict[str, Any], payload)
         except JWTError as e:
             raise JWTError(f"Token validation failed: {e}") from e
 
@@ -179,4 +186,4 @@ class OIDCTokenValidator:
         dict
             The token payload.
         """
-        return jwt.get_unverified_claims(token)
+        return cast(dict[str, Any], jwt.get_unverified_claims(token))

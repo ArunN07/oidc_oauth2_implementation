@@ -152,9 +152,7 @@ class SessionService:
             email=user_data.get("email"),
             login_time=datetime.now(UTC),
             is_active=True,
-            access_token_hash=SessionService._hash_token(
-                token_data.get("access_token", "")
-            ),
+            access_token_hash=SessionService._hash_token(token_data.get("access_token", "")),
             token_type=token_type,
             has_id_token=has_id_token,
             has_refresh_token=token_data.get("refresh_token") is not None,
@@ -186,7 +184,7 @@ class SessionService:
         UserSession | None
             The updated session record if found and was active, None otherwise.
         """
-        session = db.query(UserSession).filter(UserSession.id == session_id).first()
+        session = db.query(UserSession).filter(UserSession.id == session_id).first()  # type: ignore[arg-type]
         if session and session.is_active:
             session.logout_time = datetime.now(UTC)
             session.is_active = False
@@ -215,8 +213,9 @@ class SessionService:
         sessions = (
             db.query(UserSession)
             .filter(
-                UserSession.access_token_hash == token_hash,
-                UserSession.is_active.is_(True),
+                UserSession.access_token_hash == token_hash,  # type: ignore[arg-type]
+                # pylint: disable=singleton-comparison
+                UserSession.is_active == True,  # type: ignore[arg-type]  # noqa: E712
             )
             .all()
         )
@@ -231,9 +230,7 @@ class SessionService:
         return sessions
 
     @staticmethod
-    def get_active_sessions(
-        db: Session, user_id: str | None = None, provider: str | None = None
-    ) -> list[UserSession]:
+    def get_active_sessions(db: Session, user_id: str | None = None, provider: str | None = None) -> list[UserSession]:
         """
         Get active sessions, optionally filtered by user or provider.
 
@@ -251,12 +248,14 @@ class SessionService:
         list[UserSession]
             List of active session records.
         """
-        query = db.query(UserSession).filter(UserSession.is_active.is_(True))
+        query = db.query(UserSession).filter(
+            UserSession.is_active == True  # type: ignore[arg-type]  # noqa: E712  # pylint: disable=singleton-comparison
+        )
 
         if user_id:
-            query = query.filter(UserSession.user_id == user_id)
+            query = query.filter(UserSession.user_id == user_id)  # type: ignore[arg-type]
         if provider:
-            query = query.filter(UserSession.provider == provider)
+            query = query.filter(UserSession.provider == provider)  # type: ignore[arg-type]
 
         return query.all()
 
@@ -319,10 +318,6 @@ class SessionService:
             if success:
                 logger.info(f"Auth success: {provider} user={username or user_id}")
             else:
-                logger.warning(
-                    f"Auth failed: {provider} user={username or user_id} "
-                    f"error={error_message}"
-                )
+                logger.warning(f"Auth failed: {provider} user={username or user_id} " f"error={error_message}")
 
         return log_entry
-

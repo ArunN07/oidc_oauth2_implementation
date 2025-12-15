@@ -9,7 +9,7 @@ is passed via constructor parameters for maximum flexibility.
 import base64
 import hashlib
 import secrets
-from typing import Callable
+from typing import Any, cast
 from urllib.parse import urlencode
 
 import httpx
@@ -33,9 +33,9 @@ def generate_pkce_pair() -> tuple[str, str]:
     True
     """
     code_verifier = secrets.token_urlsafe(64)
-    code_challenge = base64.urlsafe_b64encode(
-        hashlib.sha256(code_verifier.encode("ascii")).digest()
-    ).decode("ascii").rstrip("=")
+    code_challenge = (
+        base64.urlsafe_b64encode(hashlib.sha256(code_verifier.encode("ascii")).digest()).decode("ascii").rstrip("=")
+    )
     return code_verifier, code_challenge
 
 
@@ -131,7 +131,7 @@ class GenericOIDCClient:
         """Get HTTP client with configured proxy."""
         return create_http_client(proxy=self.proxy)
 
-    async def exchange_code_for_token(self, code: str, state: str | None = None) -> dict:
+    async def exchange_code_for_token(self, code: str, state: str | None = None) -> dict[Any, Any]:
         """
         Exchange authorization code for tokens.
 
@@ -168,9 +168,9 @@ class GenericOIDCClient:
         async with self._get_http_client() as client:
             response = await client.post(self.token_endpoint, data=data, headers=headers)
         response.raise_for_status()
-        return response.json()
+        return cast(dict[Any, Any], response.json())
 
-    async def password_grant_login(self, username: str, password: str) -> dict:
+    async def password_grant_login(self, username: str, password: str) -> dict[Any, Any]:
         """
         Login using Resource Owner Password Credentials (ROPC) grant.
 
@@ -198,7 +198,7 @@ class GenericOIDCClient:
         async with self._get_http_client() as client:
             response = await client.post(self.token_endpoint, data=data, headers=headers)
         response.raise_for_status()
-        return response.json()
+        return cast(dict[Any, Any], response.json())
 
     def build_login_redirect_url(
         self,
@@ -265,7 +265,7 @@ class GenericOIDCClient:
 
         return f"{self.authorization_endpoint}?{urlencode(params)}", state
 
-    async def get_user_info(self, access_token: str) -> dict:
+    async def get_user_info(self, access_token: str) -> dict[Any, Any]:
         """
         Fetch user information from the user info endpoint.
 
@@ -294,9 +294,9 @@ class GenericOIDCClient:
         async with self._get_http_client() as client:
             response = await client.get(self.user_info_endpoint, headers=headers)
         response.raise_for_status()
-        return response.json()
+        return cast(dict[Any, Any], response.json())
 
-    async def refresh_token(self, refresh_token: str) -> dict:
+    async def refresh_token(self, refresh_token: str) -> dict[Any, Any]:
         """
         Refresh an access token.
 
@@ -320,4 +320,4 @@ class GenericOIDCClient:
         async with self._get_http_client() as client:
             response = await client.post(self.token_endpoint, data=data, headers=headers)
         response.raise_for_status()
-        return response.json()
+        return cast(dict[Any, Any], response.json())

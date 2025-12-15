@@ -51,4 +51,3 @@ def get_proxy_url() -> str | None:
     if settings.disable_proxy:
         return None
     return settings.https_proxy or settings.http_proxy
-

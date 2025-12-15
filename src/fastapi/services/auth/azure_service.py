@@ -1,7 +1,12 @@
-"""Azure AD OAuth2/OIDC authentication service."""
+"""
+Azure AD OAuth2/OIDC Authentication Service.
+
+This module provides Azure Active Directory authentication support for both
+OAuth2 and OIDC flows with PKCE and refresh token support.
+"""
 
 import secrets
-from typing import Any
+from typing import Any, cast
 
 from src.core.auth.base import BaseAuthProvider
 from src.core.auth.factory import register_provider
@@ -22,7 +27,7 @@ class AzureAuthService(BaseAuthProvider):
     2. prompt=consent is used to ensure user grants offline access
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Azure AD OIDC client and token validator."""
         self.settings = get_settings()
 
@@ -30,7 +35,6 @@ class AzureAuthService(BaseAuthProvider):
         if not self.settings.disable_proxy:
             self.proxy = self.settings.https_proxy or self.settings.http_proxy
 
-        # Ensure offline_access is in scopes for refresh_token
         scopes = self.settings.azure_scopes
         if "offline_access" not in scopes:
             scopes = f"{scopes} offline_access"
@@ -55,26 +59,28 @@ class AzureAuthService(BaseAuthProvider):
 
     @property
     def provider_name(self) -> str:
+        """Return provider identifier."""
         return "azure"
 
     @property
     def client(self) -> GenericOIDCClient:
-        return self._client
+        """Return the OIDC client instance."""
+        return cast(GenericOIDCClient, self._client)
 
     @property
     def validator(self) -> OIDCTokenValidator:
-        return self._validator
+        """Return the token validator instance."""
+        return cast(OIDCTokenValidator, self._validator)
 
     def get_authorization_url(self, state: str | None = None) -> str:
         """Build authorization URL with prompt=consent for refresh_token."""
         state = state or secrets.token_hex(16)
-        # prompt=consent ensures refresh_token is returned
         auth_url, _ = self._client.build_login_redirect_url(state=state, prompt="consent")
-        return auth_url
+        return cast(str, auth_url)
 
     async def exchange_code_for_token(self, code: str, state: str | None = None) -> dict[str, Any]:
         """Exchange authorization code for tokens."""
-        return await self._client.exchange_code_for_token(code, state=state)
+        return cast(dict[str, Any], await self._client.exchange_code_for_token(code, state=state))
 
     async def get_user_info(self, access_token: str) -> dict[str, Any]:
         """Get user info from Microsoft Graph API."""
@@ -82,15 +88,15 @@ class AzureAuthService(BaseAuthProvider):
         async with get_http_client(proxy=self.proxy) as client:
             response = await client.get("https://graph.microsoft.com/v1.0/me", headers=headers)
             response.raise_for_status()
-            return response.json()
+            return cast(dict[str, Any], response.json())
 
     async def validate_id_token(self, id_token: str) -> dict[str, Any]:
         """Validate id_token using JWKS."""
-        return await self._validator.validate_token(id_token)
+        return cast(dict[str, Any], await self._validator.validate_token(id_token))
 
     def decode_id_token(self, id_token: str) -> dict[str, Any]:
         """Decode id_token without validation."""
-        return self._validator.decode_token_unverified(id_token)
+        return cast(dict[str, Any], self._validator.decode_token_unverified(id_token))
 
     async def get_user_from_token(self, token_response: dict[str, Any]) -> dict[str, Any]:
         """Extract user info from id_token claims."""
@@ -111,7 +117,7 @@ class AzureAuthService(BaseAuthProvider):
 
     async def refresh_token(self, refresh_token: str) -> dict[str, Any]:
         """Refresh access token."""
-        return await self._client.refresh_token(refresh_token)
+        return cast(dict[str, Any], await self._client.refresh_token(refresh_token))
 
 
 register_provider("azure", AzureAuthService)

@@ -34,17 +34,17 @@ Examples
 import secrets
 from logging import Logger
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from fastapi.responses import RedirectResponse
 from sqlmodel import Session
 
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi.responses import RedirectResponse
 from src.core.configuration.logger_dependency import get_logger
 from src.core.exceptions.exceptions import OAuth2CallbackError
 from src.fastapi.models.auth.common_models import AuthResponse, UnifiedUser
 from src.fastapi.services.auth.azure_service import AzureAuthService
 from src.fastapi.services.auth.role_service import get_role_service
-from src.fastapi.utilities.session_helpers import create_session_and_log, get_request_info, log_auth_failure
 from src.fastapi.utilities.database import get_db
+from src.fastapi.utilities.session_helpers import create_session_and_log, get_request_info, log_auth_failure
 
 router = APIRouter(prefix="/azure", tags=["Azure OIDC"])
 
@@ -54,12 +54,11 @@ def get_azure_service() -> AzureAuthService:
     return AzureAuthService()
 
 
-
 @router.get("/login")
 async def azure_login(
     service: AzureAuthService = Depends(get_azure_service),
     logger: Logger = Depends(get_logger),
-):
+) -> RedirectResponse:
     """
     Initiate Azure AD OIDC login flow.
 
@@ -87,7 +86,7 @@ async def azure_callback(
     service: AzureAuthService = Depends(get_azure_service),
     db: Session = Depends(get_db),
     logger: Logger = Depends(get_logger),
-):
+) -> AuthResponse:
     """
     Handle Azure AD OIDC callback.
 
@@ -169,7 +168,7 @@ async def azure_callback(
 
     except OAuth2CallbackError:
         raise
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         log_auth_failure(db, "azure", str(e), request_info)
-        logger.error(f"Azure callback error: {e}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        logger.error("Azure callback error: %s", e)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e

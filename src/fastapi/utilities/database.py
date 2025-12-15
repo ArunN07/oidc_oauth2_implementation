@@ -25,6 +25,7 @@ Using the database dependency in a FastAPI endpoint:
 ...     return db.query(UserSession).all()
 """
 
+import os
 from functools import lru_cache
 from typing import Generator
 
@@ -35,11 +36,11 @@ from sqlmodel import Session, SQLModel, create_engine
 from src.core.exceptions.exceptions import DatabaseConnectionError
 from src.core.settings.app import get_settings
 
-# Import models to ensure they're registered with SQLModel metadata
-from src.fastapi.models.database.session_models import (  # noqa: F401
-    AuthenticationLog,
-    UserSession,
-)
+# Import models to register with SQLModel metadata (required for table creation)
+# pylint: disable=unused-import
+from src.fastapi.models.database import session_models  # noqa: F401
+
+# pylint: enable=unused-import
 
 
 def _create_tables(engine: Engine) -> None:
@@ -86,9 +87,6 @@ def get_engine(database_url: str | None = None) -> Engine:
 
     Environment variable: BACKEND_DB_URL
     """
-    import os
-
-    # Priority: parameter > BACKEND_DB_URL env > settings
     url = database_url or os.getenv("BACKEND_DB_URL") or get_settings().get_database_url()
 
     # SQLite doesn't support connection pooling options
@@ -109,14 +107,14 @@ def get_engine(database_url: str | None = None) -> Engine:
 
 
 @lru_cache(maxsize=1)
-def _ensure_tables_initialized(engine_id: int) -> bool:
+def _ensure_tables_initialized(_engine_id: int) -> bool:
     """
     Ensure database tables are initialized (called once per engine).
 
     Parameters
     ----------
-    engine_id : int
-        The id() of the engine (used as cache key).
+    _engine_id : int
+        The id() of the engine (used as cache key, not used in function body).
 
     Returns
     -------
@@ -133,9 +131,7 @@ def _ensure_tables_initialized(engine_id: int) -> bool:
         _create_tables(engine)
         return True
     except SQLAlchemyError as e:
-        raise DatabaseConnectionError(
-            message="Failed to initialize database tables", detail=str(e)
-        )
+        raise DatabaseConnectionError(message="Failed to initialize database tables", detail=str(e)) from e
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -161,4 +157,3 @@ def get_db() -> Generator[Session, None, None]:
 
     with Session(engine) as session:
         yield session
-

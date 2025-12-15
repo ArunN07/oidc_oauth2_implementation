@@ -2,5 +2,3 @@
 __all__ = ["SessionService"]
 
 from src.fastapi.services.database.session_service import SessionService
-
-

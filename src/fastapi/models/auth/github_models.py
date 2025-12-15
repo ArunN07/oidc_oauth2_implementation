@@ -1,3 +1,10 @@
+"""
+GitHub Authentication Models.
+
+This module provides Pydantic models for GitHub OAuth2
+token responses and user information.
+"""
+
 from typing import Literal
 
 from pydantic import BaseModel

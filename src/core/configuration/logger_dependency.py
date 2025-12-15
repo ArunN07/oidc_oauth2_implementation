@@ -1,3 +1,10 @@
+"""
+Logger Dependency for FastAPI.
+
+This module provides a FastAPI dependency for injecting configured loggers
+into route handlers.
+"""
+
 import os
 from logging import Logger
 

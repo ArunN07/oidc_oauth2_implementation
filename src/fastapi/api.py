@@ -1,3 +1,10 @@
+"""
+API Router Configuration.
+
+This module configures the main API router and includes all sub-routers
+for authentication providers and other endpoints.
+"""
+
 from fastapi import APIRouter
 from src.fastapi.routers.auth.auth0 import router as auth0_router
 from src.fastapi.routers.auth.azure import router as azure_router
@@ -6,7 +13,6 @@ from src.fastapi.routers.auth.github import router as github_router
 from src.fastapi.routers.auth.google import router as google_router
 from src.fastapi.routers.root import router as root_router
 
-# Main API router
 api_router = APIRouter()
 
 # Root endpoints (/, /health, /providers)

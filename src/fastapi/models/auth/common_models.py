@@ -1,3 +1,10 @@
+"""
+Common Authentication Models.
+
+This module provides unified data models for authentication responses
+that work across all OAuth2/OIDC providers.
+"""
+
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -21,9 +28,7 @@ class UnifiedUser(BaseModel):
     roles: list[str] = Field(default_factory=lambda: ["user"], description="User roles")
 
     @classmethod
-    def from_github(
-        cls, user_info: dict[str, Any], roles: list[str], groups: list[str] | None = None
-    ) -> "UnifiedUser":
+    def from_github(cls, user_info: dict[str, Any], roles: list[str], _groups: list[str] | None = None) -> "UnifiedUser":
         """Create UnifiedUser from GitHub user info."""
         return cls(
             id=str(user_info.get("id", "")),
@@ -36,9 +41,7 @@ class UnifiedUser(BaseModel):
         )
 
     @classmethod
-    def from_azure(
-        cls, user_info: dict[str, Any], roles: list[str], groups: list[str] | None = None
-    ) -> "UnifiedUser":
+    def from_azure(cls, user_info: dict[str, Any], roles: list[str], _groups: list[str] | None = None) -> "UnifiedUser":
         """Create UnifiedUser from Azure AD user info."""
         return cls(
             id=str(user_info.get("id", user_info.get("sub", ""))),
@@ -51,9 +54,7 @@ class UnifiedUser(BaseModel):
         )
 
     @classmethod
-    def from_google(
-        cls, user_info: dict[str, Any], roles: list[str], groups: list[str] | None = None
-    ) -> "UnifiedUser":
+    def from_google(cls, user_info: dict[str, Any], roles: list[str], _groups: list[str] | None = None) -> "UnifiedUser":
         """Create UnifiedUser from Google user info."""
         email = user_info.get("email", "")
         return cls(
@@ -67,9 +68,7 @@ class UnifiedUser(BaseModel):
         )
 
     @classmethod
-    def from_auth0(
-        cls, user_info: dict[str, Any], roles: list[str], groups: list[str] | None = None
-    ) -> "UnifiedUser":
+    def from_auth0(cls, user_info: dict[str, Any], roles: list[str], _groups: list[str] | None = None) -> "UnifiedUser":
         """Create UnifiedUser from Auth0 user info."""
         email = user_info.get("email", "")
         return cls(
@@ -91,25 +90,25 @@ class UnifiedUser(BaseModel):
         groups: list[str] | None = None,
     ) -> "UnifiedUser":
         """Create UnifiedUser from any provider."""
-        if provider == AuthProvider.GITHUB:
-            return cls.from_github(user_info, roles, groups)
-        elif provider == AuthProvider.AZURE:
-            return cls.from_azure(user_info, roles, groups)
-        elif provider == AuthProvider.GOOGLE:
-            return cls.from_google(user_info, roles, groups)
-        elif provider == AuthProvider.AUTH0:
-            return cls.from_auth0(user_info, roles, groups)
-        else:
-            # Generic fallback
-            return cls(
-                id=str(user_info.get("id", user_info.get("sub", "unknown"))),
-                provider=provider,
-                username=user_info.get("username") or user_info.get("login"),
-                email=user_info.get("email"),
-                name=user_info.get("name"),
-                avatar_url=user_info.get("avatar_url") or user_info.get("picture"),
-                roles=roles,
-            )
+        match provider:
+            case AuthProvider.GITHUB:
+                return cls.from_github(user_info, roles, groups)
+            case AuthProvider.AZURE:
+                return cls.from_azure(user_info, roles, groups)
+            case AuthProvider.GOOGLE:
+                return cls.from_google(user_info, roles, groups)
+            case AuthProvider.AUTH0:
+                return cls.from_auth0(user_info, roles, groups)
+            case _:
+                return cls(
+                    id=str(user_info.get("id", user_info.get("sub", "unknown"))),
+                    provider=provider,
+                    username=user_info.get("username") or user_info.get("login"),
+                    email=user_info.get("email"),
+                    name=user_info.get("name"),
+                    avatar_url=user_info.get("avatar_url") or user_info.get("picture"),
+                    roles=roles,
+                )
 
     def is_admin(self) -> bool:
         """Check if user has admin role."""

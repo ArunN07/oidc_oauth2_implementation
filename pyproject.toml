@@ -26,6 +26,7 @@ psycopg2-binary = "^2.9.9"  # PostgreSQL support
 pytest = "^7.4.3"
 pytest-asyncio = "^0.21.1"
 pytest-cov = "^4.1.0"
+pylint-pydantic = "^0.4.1"
 
 [tool.poetry.group.lint.dependencies]
 black = "^23.12.1"
@@ -52,6 +53,9 @@ extend-ignore = ["E203", "W503"]
 python_version = "3.12"
 ignore_missing_imports = true
 warn_return_any = true
+
+[tool.pylint.main]
+load-plugins = ["pylint_pydantic"]
 
 [tool.pylint.messages_control]
 disable = ["C0114", "C0115", "C0116"]

@@ -83,7 +83,6 @@ class BaseAuthProvider(ABC):
         str
             Provider identifier (e.g., 'github', 'azure', 'google').
         """
-        pass
 
     @abstractmethod
     def get_authorization_url(self, state: str | None = None) -> str:
@@ -101,12 +100,9 @@ class BaseAuthProvider(ABC):
         str
             Complete authorization URL to redirect the user to.
         """
-        pass
 
     @abstractmethod
-    async def exchange_code_for_token(
-        self, code: str, state: str | None = None
-    ) -> dict[str, Any]:
+    async def exchange_code_for_token(self, code: str, state: str | None = None) -> dict[str, Any]:
         """
         Exchange authorization code for access token(s).
 
@@ -127,7 +123,6 @@ class BaseAuthProvider(ABC):
             - expires_in: Token lifetime in seconds
             - token_type: Usually "Bearer"
         """
-        pass
 
     @abstractmethod
     async def get_user_info(self, access_token: str) -> dict[str, Any]:
@@ -147,7 +142,6 @@ class BaseAuthProvider(ABC):
             - name: Display name
             - email: Email address
         """
-        pass
 
     async def refresh_token(self, refresh_token: str) -> dict[str, Any]:
         """
@@ -172,9 +166,7 @@ class BaseAuthProvider(ABC):
         -----
         GitHub doesn't support token refresh. Azure and Google do.
         """
-        raise NotImplementedError(
-            f"{self.provider_name} does not support token refresh"
-        )
+        raise NotImplementedError(f"{self.provider_name} does not support token refresh")
 
     async def validate_token(self, token: str) -> dict[str, Any]:
         """
@@ -200,6 +192,4 @@ class BaseAuthProvider(ABC):
         OAuth2-only providers (GitHub) can't validate tokens locally.
         OIDC providers validate JWTs using JWKS endpoints.
         """
-        raise NotImplementedError(
-            f"{self.provider_name} does not support token validation"
-        )
+        raise NotImplementedError(f"{self.provider_name} does not support token validation")

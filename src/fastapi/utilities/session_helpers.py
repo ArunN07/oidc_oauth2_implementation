@@ -12,14 +12,14 @@ log_logout : Log successful logout event.
 get_request_info : Extract request metadata for logging.
 """
 
-from fastapi import Request
 from sqlmodel import Session
 
+from fastapi import Request
 from src.fastapi.models.auth.common_models import UnifiedUser
 from src.fastapi.services.database.session_service import SessionService
 
 
-def get_request_info(request: Request) -> dict[str, str]:
+def get_request_info(request: Request) -> dict[str, str | None]:
     """
     Extract request metadata for logging.
 
@@ -30,7 +30,7 @@ def get_request_info(request: Request) -> dict[str, str]:
 
     Returns
     -------
-    dict[str, str]
+    dict[str, str | None]
         Dictionary with ip_address and user_agent.
     """
     return {
@@ -144,4 +144,3 @@ def log_logout(
         error_message="logout",  # Indicates logout event
         request_info=request_info,
     )
-

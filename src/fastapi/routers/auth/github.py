@@ -33,17 +33,17 @@ Examples
 import secrets
 from logging import Logger
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from fastapi.responses import RedirectResponse
 from sqlmodel import Session
 
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi.responses import RedirectResponse
 from src.core.configuration.logger_dependency import get_logger
 from src.core.exceptions.exceptions import OAuth2CallbackError
 from src.fastapi.models.auth.common_models import AuthResponse, UnifiedUser
 from src.fastapi.services.auth.github_service import GitHubAuthService
 from src.fastapi.services.auth.role_service import get_role_service
-from src.fastapi.utilities.session_helpers import create_session_and_log, get_request_info, log_auth_failure
 from src.fastapi.utilities.database import get_db
+from src.fastapi.utilities.session_helpers import create_session_and_log, get_request_info, log_auth_failure
 
 router = APIRouter(prefix="/github", tags=["GitHub OAuth2"])
 
@@ -53,12 +53,11 @@ def get_github_service() -> GitHubAuthService:
     return GitHubAuthService()
 
 
-
 @router.get("/login")
 async def github_login(
     service: GitHubAuthService = Depends(get_github_service),
     logger: Logger = Depends(get_logger),
-):
+) -> RedirectResponse:
     """
     Initiate GitHub OAuth2 login flow.
 
@@ -85,7 +84,7 @@ async def github_callback(
     service: GitHubAuthService = Depends(get_github_service),
     db: Session = Depends(get_db),
     logger: Logger = Depends(get_logger),
-):
+) -> AuthResponse:
     """
     Handle GitHub OAuth2 callback.
 
@@ -131,7 +130,9 @@ async def github_callback(
         token_response = await service.exchange_code_for_token(code, state=state)
 
         if "error" in token_response:
-            log_auth_failure(db, "github", token_response.get("error_description", "Token exchange failed"), request_info)
+            log_auth_failure(
+                db, "github", token_response.get("error_description", "Token exchange failed"), request_info
+            )
             raise OAuth2CallbackError(message="GitHub token exchange failed")
 
         access_token = token_response.get("access_token")
@@ -166,7 +167,7 @@ async def github_callback(
 
     except OAuth2CallbackError:
         raise
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         log_auth_failure(db, "github", str(e), request_info)
-        logger.error(f"GitHub callback error: {e}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        logger.error("GitHub callback error: %s", e)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
