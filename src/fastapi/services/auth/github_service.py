@@ -81,12 +81,32 @@ class GitHubAuthService(BaseAuthProvider):
             return [org.get("login", "") for org in response.json()]
 
     async def get_user_with_orgs(self, access_token: str) -> dict[str, Any]:
-        """Get user info with organizations for role assignment."""
+        """Get user info with organizations and email for role assignment."""
         user = await self.get_user_info(access_token)
+
+        # Fetch organizations
         try:
             user["organizations"] = await self.get_user_organizations(access_token)
         except httpx.HTTPError:
             user["organizations"] = []
+
+        # If email is not in user profile (user set it to private), fetch from /user/emails
+        if not user.get("email"):
+            try:
+                emails = await self.get_user_emails(access_token)
+                # Find the primary verified email
+                primary_email = next((e["email"] for e in emails if e.get("primary") and e.get("verified")), None)
+                if primary_email:
+                    user["email"] = primary_email
+                # If no primary email, use the first verified email
+                elif emails:
+                    verified_email = next((e["email"] for e in emails if e.get("verified")), None)
+                    if verified_email:
+                        user["email"] = verified_email
+            except httpx.HTTPError:
+                # If we can't fetch emails, leave it as None
+                pass
+
         return user
 
 
