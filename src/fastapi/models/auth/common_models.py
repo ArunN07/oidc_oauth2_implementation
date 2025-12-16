@@ -42,14 +42,34 @@ class UnifiedUser(BaseModel):
 
     @classmethod
     def from_azure(cls, user_info: dict[str, Any], roles: list[str], _groups: list[str] | None = None) -> "UnifiedUser":
-        """Create UnifiedUser from Azure AD user info."""
+        """Create UnifiedUser from Azure AD user info (Graph API or ID token)."""
+        # Handle both Microsoft Graph API response and ID token claims
+        user_id = str(user_info.get("id", user_info.get("sub", user_info.get("oid", ""))))
+
+        # Username: try Graph API fields first, then ID token fields
+        username = (
+            user_info.get("userPrincipalName") or user_info.get("preferred_username") or user_info.get("unique_name")
+        )
+
+        # Email: try Graph API fields first, then ID token fields
+        email = (
+            user_info.get("mail")
+            or user_info.get("email")
+            or user_info.get("userPrincipalName")
+            or user_info.get("preferred_username")
+            or user_info.get("unique_name")
+        )
+
+        # Name: try Graph API fields first, then ID token fields
+        name = user_info.get("displayName") or user_info.get("name")
+
         return cls(
-            id=str(user_info.get("id", user_info.get("sub", ""))),
+            id=user_id,
             provider=AuthProvider.AZURE,
-            username=user_info.get("userPrincipalName"),
-            email=user_info.get("mail") or user_info.get("userPrincipalName"),
-            name=user_info.get("displayName") or user_info.get("name"),
-            avatar_url=None,
+            username=username,
+            email=email,
+            name=name,
+            avatar_url=None,  # Azure doesn't provide avatar URL in basic profile
             roles=roles,
         )
 

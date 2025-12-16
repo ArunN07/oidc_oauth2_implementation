@@ -1,0 +1,6 @@
+[flake8]
+max-line-length = 121
+exclude = .git,__pycache__,.venv
+plugins = flake8-import-order
+import-order-style = pep8
+application-import-names = oidc_oauth2_implementation
