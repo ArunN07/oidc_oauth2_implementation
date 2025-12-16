@@ -19,15 +19,14 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+*.log
 
 # Virtual environments
 venv/
 ENV/
 env/
 .venv
-
-# Poetry
-poetry.lock
 
 # IDEs
 .vscode/
@@ -37,40 +36,39 @@ poetry.lock
 *~
 .DS_Store
 
-# Environment variables
-.env.local
-.env.*.local
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-*.cover
-
-# Docker
-Dockerfile
-docker-compose*.yml
-.dockerignore
-
 # Git
 .git/
 .gitignore
 .gitattributes
 
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
 # Documentation
 *.md
 docs/
 
-# Logs
-*.log
+# Tests
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Local development
 logs/
-
-# Database
-*.sqlite
 *.db
+*.sqlite
 
-# Other
-.mypy_cache/
-.ruff_cache/
-.pre-commit-config.yaml
+# Scripts not needed in container
+scripts/
+
+# Environment files (loaded separately)
+.env
+.env.*
 

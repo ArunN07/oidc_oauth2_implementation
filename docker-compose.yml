@@ -1,6 +1,26 @@
 version: "3.8"
 
 services:
+  db:
+    image: postgres:15-alpine
+    container_name: oidc_oauth2_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - oidc_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   app:
     build: .
     container_name: oidc_oauth2_app
@@ -8,23 +28,23 @@ services:
       - "8001:8001"
     env_file:
       - .env
+    environment:
+      # Override database URL to use Docker service name
+      BACKEND_DB_URL: postgresql://postgres:postgres@db:5432/postgres
     volumes:
       - ./logs:/app/logs
+      # Mount source for development (comment out for production)
+      - ./src:/app/src
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - oidc_network
     restart: unless-stopped
 
-  # Optional: PostgreSQL database
-  db:
-    image: postgres:15-alpine
-    container_name: oidc_oauth2_db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: github_oauth
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+networks:
+  oidc_network:
+    driver: bridge
 
 volumes:
   postgres_data:

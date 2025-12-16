@@ -7,18 +7,19 @@
 ## 📋 Table of Contents
 
 1. [🎯 Introduction](#-introduction)
-2. [🔐 OAuth2 vs OIDC](#-oauth2-vs-oidc)
-3. [🏗️ Architecture Overview](#️-architecture-overview)
-4. [🧩 Core Auth Module](#-core-auth-module)
-5. [🏭 Provider Factory Pattern](#-provider-factory-pattern)
-6. [🔒 PKCE Security Implementation](#-pkce-security-implementation)
-7. [💾 Cache Usage](#-cache-usage)
-8. [🗄️ Database Logging & Session Tracking](#️-database-logging--session-tracking)
-9. [👥 Role Service](#-role-service)
-10. [📊 Flow Diagrams](#-flow-diagrams)
-11. [🚀 API Endpoints](#-api-endpoints)
-12. [⚙️ Provider Implementation Guide](#️-provider-implementation-guide)
-13. [🔧 Setup & Configuration](#-setup--configuration)
+2. [🐳 Quick Start with Docker](#-quick-start-with-docker)
+3. [🔐 OAuth2 vs OIDC](#-oauth2-vs-oidc)
+4. [🏗️ Architecture Overview](#️-architecture-overview)
+5. [🧩 Core Auth Module](#-core-auth-module)
+6. [🏭 Provider Factory Pattern](#-provider-factory-pattern)
+7. [🔒 PKCE Security Implementation](#-pkce-security-implementation)
+8. [💾 Cache Usage](#-cache-usage)
+9. [🗄️ Database Logging & Session Tracking](#️-database-logging--session-tracking)
+10. [👥 Role Service](#-role-service)
+11. [📊 Flow Diagrams](#-flow-diagrams)
+12. [🚀 API Endpoints](#-api-endpoints)
+13. [⚙️ Provider Implementation Guide](#️-provider-implementation-guide)
+14. [🔧 Setup & Configuration](#-setup--configuration)
 
 ---
 
@@ -34,6 +35,96 @@ This project demonstrates the practical differences between **OAuth2** and **Ope
 | **Azure AD** | OAuth2 + OIDC | `access_token` + `id_token` + `refresh_token` | ✅ |
 | **Google** | OAuth2 + OIDC | `access_token` + `id_token` + `refresh_token` | ✅ |
 | **Auth0** | OAuth2 + OIDC | `access_token` + `id_token` + `refresh_token` | ✅ |
+
+---
+
+## 🐳 Quick Start with Docker
+
+The easiest way to run this project is using Docker. This will set up both the FastAPI application and PostgreSQL database automatically.
+
+### Prerequisites
+- Docker (20.10+)
+- Docker Compose (2.0+)
+
+### Start the Application
+
+```bash
+# Development mode (hot reload - code changes auto-refresh!)
+make dev
+
+# Or use docker-compose directly (dev mode is default)
+docker-compose up
+
+# Production mode (optimized)
+make prod
+```
+
+**✨ Hot Reload Enabled**: Edit your code → Save → See changes instantly (no rebuild!)
+
+### Access the Application
+
+- **API Documentation**: http://localhost:8001/docs
+- **Alternative Docs**: http://localhost:8001/redoc
+- **Health Check**: http://localhost:8001/health
+
+### Development Workflow
+
+```bash
+# 1. Start development environment
+make dev
+
+# 2. Edit code (auto-reloads!)
+vim src/core/auth/oidc_client.py
+
+# 3. View logs in another terminal
+make logs-app
+
+# 4. Test immediately at http://localhost:8001/docs
+```
+
+### Cross-Platform Commands
+
+Works identically on **Mac, Windows, and Linux**:
+
+```bash
+# Essential commands
+make dev        # Start with hot reload
+make prod       # Start optimized
+make logs       # View all logs
+make logs-app   # View app logs only
+make shell      # Access app container
+make shell-db   # Access database
+make health     # Check health
+make down       # Stop services
+make clean-all  # Full cleanup
+```
+
+### Mode Configuration
+
+Add to `.env` to control behavior:
+
+```bash
+# Development (default)
+DOCKER_MODE=dev
+DEBUG=true
+LOG_LEVEL=DEBUG
+
+# Production
+DOCKER_MODE=prod
+DEBUG=false
+LOG_LEVEL=WARNING
+```
+
+### Configuration
+
+Add to `.env`:
+```bash
+DOCKER_MODE=dev    # or "prod"
+DEBUG=true
+LOG_LEVEL=DEBUG
+```
+
+**Full Docker guide:** See [DOCKER.md](DOCKER.md)
 
 ---
 
