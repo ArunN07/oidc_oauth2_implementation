@@ -67,18 +67,22 @@ class RoleService:
                 return []
 
     def _get_github_roles(self, user_data: dict[str, Any]) -> list[str]:
-        """Check GitHub admin roles."""
+        """Check GitHub roles based on username, organizations, and teams."""
         roles = []
         username = user_data.get("login", "")
-        orgs = user_data.get("organizations", [])
+        teams = user_data.get("teams", [])  # Team slugs like ['developers', 'moderators']
 
+        # Check for admin role
         admin_usernames = self._parse_csv(self.settings.github_admin_usernames)
         if username in admin_usernames:
             roles.append(Role.ADMIN.value)
 
-        admin_orgs = self._parse_csv(self.settings.github_admin_orgs)
-        if any(org in admin_orgs for org in orgs):
-            roles.append(Role.ADMIN.value)
+        # Automatically add teams as roles
+        if teams and isinstance(teams, list):
+            for team in teams:
+                if team and isinstance(team, str):
+                    # Add team slug as a role directly
+                    roles.append(team)
 
         return roles
 
@@ -98,16 +102,28 @@ class RoleService:
         if any(g in admin_groups for g in user_groups):
             roles.append(Role.ADMIN.value)
 
-        # Check if user has any built-in Azure AD admin roles (wids)
-        # wids = Windows Identity Directory Service role template IDs
-        # Common examples:
-        # - 62e90394-69f5-4237-9190-012177145e10 = Global Administrator
-        # - b79fbf4d-3ef9-4689-8143-76b194e85509 = Security Administrator
         admin_role_ids = self._parse_csv(self.settings.azure_admin_role_ids)
         if admin_role_ids:
             # Check in groups field (which includes wids from get_user_info)
             if any(role_id in user_groups for role_id in admin_role_ids):
                 roles.append(Role.ADMIN.value)
+
+        token_roles = user_data.get("roles", [])
+        if not token_roles and "claims" in user_data:
+            token_roles = user_data.get("claims", {}).get("roles", [])
+
+        if isinstance(token_roles, list):
+            # Automatically add all Azure AD App Roles as application roles
+            for token_role in token_roles:
+                if token_role and isinstance(token_role, str):
+                    # Add the role directly (e.g., "developer", "moderator", "manager")
+                    role_lower = token_role.lower()
+                    if role_lower == "admin":
+                        # Map "admin" role from Azure to our Role.ADMIN
+                        roles.append(Role.ADMIN.value)
+                    else:
+                        # Add any other role as-is
+                        roles.append(role_lower)
 
         return roles
 

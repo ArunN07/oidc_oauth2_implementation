@@ -80,17 +80,61 @@ class GitHubAuthService(BaseAuthProvider):
             response.raise_for_status()
             return [org.get("login", "") for org in response.json()]
 
+    async def get_user_teams(self, access_token: str) -> list[str]:
+        """
+        Get GitHub user's team memberships across all organizations.
+
+        Args:
+            access_token: GitHub OAuth access token
+
+        Returns:
+            List of team slugs the user is a member of
+
+        Note: Requires 'read:org' scope to access team information.
+        """
+        headers = {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
+        teams = []
+
+        async with get_http_client(proxy=self.proxy) as client:
+            try:
+                # Use the /user/teams endpoint which returns only teams the user is a member of
+                teams_url = "https://api.github.com/user/teams"
+                teams_response = await client.get(
+                    teams_url, headers=headers, params={"per_page": 100}  # Get up to 100 teams
+                )
+
+                if teams_response.status_code == 200:
+                    user_teams = teams_response.json()
+                    # Extract team slugs (only teams user is actually a member of)
+                    for team in user_teams:
+                        team_slug = team.get("slug", "")
+                        if team_slug and team_slug not in teams:
+                            teams.append(team_slug)
+
+            except httpx.HTTPError:
+                # If /user/teams doesn't work, return empty list
+                pass
+
+        return teams
+
     async def get_user_with_orgs(self, access_token: str) -> dict[str, Any]:
-        """Get user info with organizations and email for role assignment."""
+        """Get user info with organizations, teams, and email for role assignment."""
         user = await self.get_user_info(access_token)
 
         # Fetch organizations
+        organizations = []
         try:
-            user["organizations"] = await self.get_user_organizations(access_token)
+            organizations = await self.get_user_organizations(access_token)
+            user["organizations"] = organizations
         except httpx.HTTPError:
             user["organizations"] = []
 
-        # If email is not in user profile (user set it to private), fetch from /user/emails
+        # Fetch teams (for custom role detection)
+        try:
+            user["teams"] = await self.get_user_teams(access_token)
+        except httpx.HTTPError:
+            user["teams"] = []
+
         if not user.get("email"):
             try:
                 emails = await self.get_user_emails(access_token)

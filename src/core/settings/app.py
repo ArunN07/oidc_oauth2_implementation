@@ -112,7 +112,7 @@ class Settings(BaseSettings):
     )
     github_token_url: str = Field(default="https://github.com/login/oauth/access_token", alias="GITHUB_TOKEN_URL")
     github_user_api_url: str = Field(default="https://api.github.com/user", alias="GITHUB_USER_API_URL")
-    github_scopes: str = Field(default="read:user user:email", alias="GITHUB_SCOPES")
+    github_scopes: str = Field(default="read:user user:email read:org", alias="GITHUB_SCOPES")
     github_admin_usernames: str = Field(default="", alias="GITHUB_ADMIN_USERNAMES")
     github_admin_orgs: str = Field(default="", alias="GITHUB_ADMIN_ORGS")
 
