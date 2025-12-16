@@ -448,10 +448,3 @@ Be specific and clear:
 
 ---
 
-## Related Documentation
-
-- [CUSTOM_ROLES_IN_PORTALS.md](./CUSTOM_ROLES_IN_PORTALS.md) - Compare Azure vs GitHub roles
-- [TESTING_CUSTOM_ROLES.md](./TESTING_CUSTOM_ROLES.md) - Test custom roles
-- [AZURE_ROLES_TROUBLESHOOTING.md](./AZURE_ROLES_TROUBLESHOOTING.md) - Troubleshoot role issues
-- [AZURE_ADMIN_ROLES.md](./AZURE_ADMIN_ROLES.md) - Admin role detection
-
