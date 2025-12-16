@@ -83,12 +83,54 @@ class AzureAuthService(BaseAuthProvider):
         return cast(dict[str, Any], await self._client.exchange_code_for_token(code, state=state))
 
     async def get_user_info(self, access_token: str) -> dict[str, Any]:
-        """Get user info from Microsoft Graph API."""
+        """
+        Get user info from Microsoft Graph API with groups.
+
+        Note: For OAuth2 flow to retrieve groups, the access token needs one of:
+        - GroupMember.Read.All scope (requires admin consent)
+        - Directory.Read.All scope (requires admin consent)
+
+        If groups cannot be fetched, we extract directory roles from the
+        access token's 'wids' claim as a fallback.
+        """
         headers = {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
+
+        # Decode token to extract claims (for email and groups fallback)
+        token_claims: dict[str, Any] = {}
+        try:
+            token_claims = self._validator.decode_token_unverified(access_token)
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+
         async with get_http_client(proxy=self.proxy) as client:
+            # Get basic user info
             response = await client.get("https://graph.microsoft.com/v1.0/me", headers=headers)
             response.raise_for_status()
-            return cast(dict[str, Any], response.json())
+            user_info = response.json()
+
+            # Fallback: If Graph API doesn't return 'mail', use email from token claims
+            # This is common for external/guest users (e.g., hotmail.com users in Azure AD)
+            if not user_info.get("mail") and token_claims.get("email"):
+                user_info["email"] = token_claims["email"]
+
+            # Try to get user's group memberships
+            groups: list[str] = []
+            try:
+                groups_response = await client.get("https://graph.microsoft.com/v1.0/me/memberOf", headers=headers)
+                if groups_response.status_code == 200:
+                    groups_data = groups_response.json()
+                    # Extract group IDs from the response
+                    groups = [group.get("id") for group in groups_data.get("value", []) if group.get("id")]
+            except Exception:  # pylint: disable=broad-exception-caught
+                # If groups request fails (insufficient permissions),
+                # extract from access token claims as fallback
+                if token_claims:
+                    # wids = Windows Identity Directory Service role template IDs
+                    # groups can also be in the token if configured
+                    groups = token_claims.get("groups", []) or token_claims.get("wids", [])
+
+            user_info["groups"] = groups
+            return cast(dict[str, Any], user_info)
 
     async def validate_id_token(self, id_token: str) -> dict[str, Any]:
         """Validate id_token using JWKS."""

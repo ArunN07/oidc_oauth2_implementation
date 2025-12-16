@@ -25,3 +25,31 @@ from src.fastapi.models.auth.google_models import (
     GoogleUser,
     GoogleUserResponse,
 )
+
+__all__ = [
+    # Azure models
+    "AzureCallbackResponse",
+    "AzureIdTokenClaims",
+    "AzureLoginResponse",
+    "AzureTokenResponse",
+    "AzureUser",
+    "AzureUserResponse",
+    # Common models
+    "AuthResponse",
+    "RoleCheckResponse",
+    "UnifiedUser",
+    # GitHub models
+    "GitHubCallbackResponse",
+    "GitHubEmail",
+    "GitHubLoginResponse",
+    "GitHubTokenResponse",
+    "GitHubUser",
+    "GitHubUserResponse",
+    # Google models
+    "GoogleCallbackResponse",
+    "GoogleIdTokenClaims",
+    "GoogleLoginResponse",
+    "GoogleTokenResponse",
+    "GoogleUser",
+    "GoogleUserResponse",
+]

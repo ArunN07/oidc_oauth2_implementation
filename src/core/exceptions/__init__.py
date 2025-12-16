@@ -14,3 +14,18 @@ from src.core.exceptions.exceptions import (
     TokenValidationError,
     UserNotFoundError,
 )
+
+__all__ = [
+    "AuthError",
+    "BaseAppException",
+    "ConfigError",
+    "DatabaseConnectionError",
+    "DatabaseException",
+    "InvalidCredentialsError",
+    "MissingConfigurationError",
+    "OAuth2CallbackError",
+    "ProviderNotSupportedError",
+    "TokenExpiredError",
+    "TokenValidationError",
+    "UserNotFoundError",
+]

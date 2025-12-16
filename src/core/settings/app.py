@@ -129,10 +129,17 @@ class Settings(BaseSettings):
     azure_oauth2_redirect_uri: str = Field(
         default="http://localhost:8001/api/v1/auth/oauth2/callback", alias="AZURE_OAUTH2_REDIRECT_URI"
     )
-    azure_oauth2_scopes: str = Field(default="https://graph.microsoft.com/User.Read", alias="AZURE_OAUTH2_SCOPES")
+    azure_oauth2_scopes: str = Field(
+        default="https://graph.microsoft.com/User.Read https://graph.microsoft.com/GroupMember.Read.All",
+        alias="AZURE_OAUTH2_SCOPES",
+    )
     azure_admin_usernames: str = Field(default="", alias="AZURE_ADMIN_USERNAMES")
     azure_admin_groups: str = Field(default="", alias="AZURE_ADMIN_GROUPS")
     azure_admin_domains: str = Field(default="", alias="AZURE_ADMIN_DOMAINS")
+    azure_admin_role_ids: str = Field(
+        default="",  # Empty by default - explicitly configure Azure AD role IDs for admin access
+        alias="AZURE_ADMIN_ROLE_IDS",
+    )
 
     # Google OAuth2/OIDC Configuration
     google_client_id: str = Field(default="", alias="GOOGLE_CLIENT_ID")

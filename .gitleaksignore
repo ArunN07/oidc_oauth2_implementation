@@ -1,0 +1,7 @@
+# Gitleaks Ignore File
+# This file tells gitleaks to ignore false positives
+
+# Documentation examples - these are NOT real secrets
+documentation/AZURE_ADMIN_ROLES.md:generic-api-key:122
+documentation/AZURE_ROLES_TROUBLESHOOTING.md:curl-auth-header:258
+

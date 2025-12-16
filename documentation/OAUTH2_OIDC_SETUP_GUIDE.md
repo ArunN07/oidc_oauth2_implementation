@@ -104,11 +104,43 @@ Azure Active Directory provides full OIDC support with enterprise features.
    - Go to "Users and groups"
    - Add users and assign roles
 
+### 6. Configure API Permissions for Group Access (Important!)
+
+**For OAuth2 Flow:**
+To retrieve user group memberships via Microsoft Graph API, you need additional permissions:
+
+1. In your app registration: Go to "API permissions"
+2. Click "Add a permission" → "Microsoft Graph" → "Delegated permissions"
+3. Add these permissions:
+   - `User.Read` (basic user profile - already included)
+   - `GroupMember.Read.All` (to read user's group memberships)
+4. Click "Grant admin consent" (requires admin privileges)
+   - This is **critical** - without admin consent, the app cannot read groups
+
+**For OIDC Flow:**
+Groups are automatically included in the ID token if configured:
+
+1. In your app registration: Go to "Token configuration"
+2. Click "Add groups claim"
+3. Select group types to include (Security groups, Directory roles, etc.)
+4. Choose "Group ID" format
+5. Save the configuration
+
+**Important Difference:**
+- **OAuth2 Flow**: Makes API calls to Microsoft Graph to fetch groups (requires `GroupMember.Read.All` scope with admin consent)
+- **OIDC Flow**: Groups are embedded in the ID token (requires token configuration but no additional API permissions)
+
+**Fallback Mechanism:**
+If OAuth2 flow cannot fetch groups from Graph API (due to insufficient permissions), the application will attempt to extract directory role IDs from the access token's `wids` claim as a fallback.
+
 ### Testing Your Setup
 - Use Application ID as Client ID, and Client Secret value
 - Test with Azure AD users in your tenant
+- Verify group/role claims are present in responses
 
-**Documentation:** [Azure AD App Registration](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app)
+**Documentation:** 
+- [Azure AD App Registration](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app)
+- [Azure AD Group Claims](https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-optional-claims)
 
 ---
 

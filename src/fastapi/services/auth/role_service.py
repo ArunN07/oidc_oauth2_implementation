@@ -87,14 +87,27 @@ class RoleService:
         roles = []
         email = user_data.get("email", "") or user_data.get("preferred_username", "")
 
+        # Check if email is in admin usernames list
         admin_usernames = self._parse_csv(self.settings.azure_admin_usernames)
         if email in admin_usernames:
             roles.append(Role.ADMIN.value)
 
+        # Check if user's groups contain any admin groups
         admin_groups = self._parse_csv(self.settings.azure_admin_groups)
         user_groups = user_data.get("groups", [])
         if any(g in admin_groups for g in user_groups):
             roles.append(Role.ADMIN.value)
+
+        # Check if user has any built-in Azure AD admin roles (wids)
+        # wids = Windows Identity Directory Service role template IDs
+        # Common examples:
+        # - 62e90394-69f5-4237-9190-012177145e10 = Global Administrator
+        # - b79fbf4d-3ef9-4689-8143-76b194e85509 = Security Administrator
+        admin_role_ids = self._parse_csv(self.settings.azure_admin_role_ids)
+        if admin_role_ids:
+            # Check in groups field (which includes wids from get_user_info)
+            if any(role_id in user_groups for role_id in admin_role_ids):
+                roles.append(Role.ADMIN.value)
 
         return roles
 
