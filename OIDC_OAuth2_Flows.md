@@ -60,7 +60,7 @@ OIDC extends OAuth2 with identity information. The client receives ID tokens con
 sequenceDiagram
     participant User
     participant Client
-    participant OP (OpenID Provider)
+    participant OP as OP<br/>(OpenID Provider)
     participant ResourceServer
 
     User->>Client: Initiate Login
