@@ -1,0 +1,248 @@
+name: CI Pipeline
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+env:
+  PYTHON_VERSION: "3.12"
+jobs:
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.3
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outname: CI Pipeline
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches:taon:
+  push:
+        un    brry  pull_request:
+    branches: [main,me    branches: tienv:
+  PYTHON_VERSION: "3.12"
+jobs:
+n   Pckjobs:
+  lint:
+    name:    lina    naec    runs-on: ubuntu-latest
+       steps:
+      - name:  -      - nly        uses: actions/chec L      - name: Set up Python
+    tr        uses: actions/setune        with:
+          python-versi w          py        - name: Install Poetry
+        uses: snok/inrt        uses: snok/install-yl        with:
+          version: 1.sr          vee-          virtualenvs-c11          virtualenvs-in-project:
+       - name: Load cached venv
+      u-        id: cached-poetry-deprv        uses: actions/cache@v4
+      po        with:
+          path:            paSE          key: venv-        - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outname: CI Pipe:5        if: steps.cached-poetry-d -on:
+  push:
+    branches: [main, master, develop]
+  pull_request -  ea    brme  pull_request:
+    branches:taon:
+       branches:t -  push:
+        uod            branches: [main,me    branch    PYTHON_VERSION: "3.12"
+jobs:
+n   Pckjobnsjobs:
+n   Pckjobs:
+  li  n   :
+  lint:
+   yt    nars       steps:
+      - name:  -      - nly        ull      - name      tr        uses: actions/setune        with:
+          python-versi w         ir          python-versi w          py        - -p        uses: snok/inrt        uses: snok/install-yl        with:et          version: 1.sr          vee-          virtualenvs-c1            - name: Load cached venv
+      u-        id: cached-poetry-deprv        uses: actions/c'*      u-        id: cached-poee:      po        with:
+          path:            paSE          key: ut          path:     ru        if: steps.cached-poetry-dependencies.outname: CI Pipe:5        if: steps.cachet
+  push:
+    branches: [main, master, develop]
+  pull_request -  ea    brme  pull_request:
+    branch      brTA  pull_request -  ea    brme  pull_rt_    branches:taon:
+       branches:t -  pun:       branches:try        uod            brovjobs:
+n   Pckjobnsjobs:
+n   Pckjobs:
+  li  n   :
+  lint:
+   yt    nars      gen   orn   Pckjobs:
+  l c  li  n   :co  lint:
+  4
+   yt         - name:  -      - nov          python-versi w         ir          python-versi w          py        - -p        uses: sSe      u-        id: cached-poetry-deprv        uses: actions/c'*      u-        id: cached-poee:      po        with:
+          path:            paSE          key: ut          path:     ru        if: steps.cached-poetry-dependencies.outname: CI P            path:            paSE          key: ut          path:     ru        if: steps.cached-poetry-dependencies.ons  push:
+    branches: [main, master, develop]
+  pull_request -  ea    brme  pull_request:
+    branch      brTA  pull_request -  ea    brme  pull_rt_    bran      br -  pull_request -  ea    brme  pull_r -    branch      brTA  pull_request -  ea           branches:t -  pun:       branches:try        uod            brovjobs{{n   Pckjobnsjobs:
+n   Pckjobs:
+  li  n   :
+  lint:
+   yt    nars      gen   Bn   Pckjobs:
+  le
+  li  n   ::   lint:
+  es      ne  l c  li  n   :co  lint:
+  4
+   yt   am  4
+   yt         - name u  s:          path:            paSE          key: ut          path:     ru        if: steps.cached-poetry-dependencies.outname: CI P            path:            paSE          key: ut          path:     ru        if: steps.cached-poetry-dependencies.ons  pc-    branches: [main, master, develop]
+  pull_request -  ea    brme  pull_request:
+    branch      brTA  pull_requ
+
+
+
+
+
+
+
+
+
+cat > /Users/admin/Documents/Projects/oidc_oauth2_implementation/.github/workflows/cd.yml << 'EOF'
+name: CD Pipeline
+on:
+  push:
+    branches: [main, master]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+jobs:
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to GitHub Container Registry
+        usesname: CD Pipeline
+on:
+  push:
+    branches: [main, master]
+    tags:
+      - 'v*'
+  workflow_disp: on:
+  push:
+     }        br      tags:
+      - 'v*'
+  woB_      - 
+   workflow_:     inputs:
+      er       envi          descripti          required: true
+        default: 'stah:        default: 'sta{         type: choice
+    MA        options:
+              - sta            - producbrenv:
+  REGISTRY: ghcr=r  Rev  IMAGE_NAME: ${{  tpermissions:
+  contents: read
+  packa    contents:mv  packages: wrijo  id-token: writ  jobs:
+  build-an,p  bux=    name: Build  t    runs-on: ubuntu-latest
+    outth    outputs:
+      image_ad      imagein      image_digest: ${{ steps.build.outputs.dima    steps:
+      - name: Checkout code
+        uses:        - n b        uses: actions/checbu      - name: Set up QEMU
+      
+         uses: docker/set        - name: Set up Docker Buildx
+     .m        uses: docker/setup-buildxel      - name: Log in to GitHub Container R          usesname: CD Pipeline
+on:
+  push:
+    bracon:
+  push:
+    branches: [mca  e-    brpe    tags:
+      - 'v*'
+  wo G      - ar  workflow_st  push:
+     }      a     }/a      - 'v*'
+  woB_      -    woB_     
+    workflow_:ec      er       envi      }        default: 'stah:        default: 'sta{         type: cui    MA        options:
+              - sta            - producbreag              - sta   t  REGISTRY: ghcr=r  Rev  IMAGE_NAME: ${{  tpds  contents: read
+  packa    contents:mv  packages: wriel  packa    contev  build-an,p  bux=    name: Build  t    runs-on: ubuntu-latesnm    outth    outputs:
+      image_ad      imagein      image_ur      image_ad      xa      - name: Checkout code
+        uses:        - n b        uses: actions/checbu            uses:        - n bg
+      
+         uses: docker/set        - name: Set up Docker Buildx
+     .m         ho     .m        uses: docker/setup-buildxel      - name: Log   on:
+  push:
+    bracon:
+  push:
+    branches: [mca  e-    brpe    tags:
+      - 'v*'
+  wo G      - ar  workflow_stan  pu    brpu  push:
+  ag    br        - 'v*'
+  wo G      - ar  workfloer  wo G     ll     }      a     }/a      - 'v*'
+ ma  woB_      -    woB_     
+    wd"    workflow_:ec      er  n              - sta            - producbreag              - sta   t  REGISTRY: ghcr=r  Rev  IMAGE_NAME: ${{  tpds  contents: r|   packa    contents:mv  packages: wriel  packa    contev  build-an,p  bux=    name: Build  t    runs-on: ubuntu-latesnm    outthct      image_ad      imagein      image_ur      image_ad      xa      - name: Checkout code
+        uses:        - n b        uses: actions/io        uses:        - n b        uses: actions/checbu            uses:        - n bg
+   ch      
+         uses: docker/set        - name: Set up Docker Buildx
+     .m        ti     pl     .m         ho     .m        uses: docker/setup-buildxelde  push:
+    bracon:
+  push:
+    branches: [mca  e-    brpe    tags:
+      - 'v*'
+ :     brs   push:
+  vi    brlu      - 'v*'
+  wo G      - ar  workflopl  wo G     cat > /Users/admin/Documents/Projects/oidc_oauth2_implementation/.github/workflows/release.yml << 'EOF'
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+permissions:
+  contents: write
+  packages: write
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate changelog
+        id: changelog
+        uses: orhun/git-cliff-action@v3
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+        continue-on-error: true
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: ${{ steps.changelog.outputs.content }}
+          draft: false
+          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
