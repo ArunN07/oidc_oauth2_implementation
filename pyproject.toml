@@ -8,7 +8,7 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-fastapi = "^0.109.0"
+fastapi = "^0.126.0"
 uvicorn = { extras = ["standard"], version = "^0.27.0" }
 httpx = "^0.26.0"
 python-dotenv = "^1.0.0"
